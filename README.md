@@ -1,5 +1,4 @@
-# IMMORTOOL <img src="man/figures/logo.jpg" align="right" height="139" alt="" /> 
-
+# IMMORTOOL <img src="man/figures/logo.png" align="right" height="139" alt="" />
 Tool to explore the potential for immortal time bias
 
 
