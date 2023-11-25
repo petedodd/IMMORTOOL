@@ -83,18 +83,18 @@ ITBstats <- function(N=1e4,           #simulation cohort size
 ##' @author Pete Dodd
 ##' @export
 ##' @import ggplot2
-makeDistPlot <- function(inputs, #TODO bring other parms under inputs
-                         k.e,k.d,k.l){
+makeDistPlot <- function(input){
   ggplot2::ggplot() +
-    ggplot2::xlim(0,2*max(input$L.e,input$L.d,input$L.l)) +
-    ggplot2::geom_function(aes(colour="exposure"),fun=dweibull,args=list(shape=k.e,scale=input$L.e)) +
-    ggplot2::geom_function(aes(colour="death"),fun=dweibull,args=list(shape=k.d,scale=input$L.d)) +
-    ggplot2::geom_function(aes(colour="LTBU"),fun=dweibull,args=list(shape=k.l,scale=input$L.l)) +
+    ggplot2::xlim(0,input$T.max) +
+    ggplot2::geom_function(aes(colour="exposure"),fun=dweibull,
+                           args=list(shape=input$k.e,scale=input$L.e)) +
+    ggplot2::geom_function(aes(colour="death"),fun=dweibull,
+                           args=list(shape=input$k.d,scale=input$L.d)) +
+    ggplot2::geom_function(aes(colour="LTBU"),fun=dweibull,
+                           args=list(shape=input$k.l,scale=input$L.l)) +
     ggplot2::xlab('Time') + ggplot2::ylab('') +
     ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
 }
-
-
 
 
 ##' Make plot of effect and CIs by sample size

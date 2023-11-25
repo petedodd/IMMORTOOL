@@ -10,9 +10,8 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      h1("IMMORTOOL"),
-
-      ## TODO these things all need moving into modules!?
+      h1("IMMORTOOL:"),
+      h2("Exploring the potential for immortal time bias"),
 
       ## Sidebar layout with input and output definitions ----
       sidebarLayout(
@@ -20,26 +19,48 @@ app_ui <- function(request) {
         ## Sidebar panel for inputs ----
         sidebarPanel(
 
+          ## Input: Slider for End time ----
+          sliderInput(inputId = "T.max",
+                      label = "Follow-up time:",
+                      min = 1,
+                      max = 100,
+                      value = 90),
+
           ## Input: Slider for exposure ----
           sliderInput(inputId = "L.e",
                       label = "Exposure scale parameter:",
-                      min = 0.5,
+                      min = 0.001,
                       max = 5,
+                      value = 1),
+          sliderInput(inputId = "k.e",
+                      label = "Exposure shape parameter:",
+                      min = -1,
+                      max = 20,
                       value = 1),
 
           ## Input: Slider for death ----
           sliderInput(inputId = "L.d",
                       label = "Death scale parameter:",
-                      min = 0.5,
+                      min = 0.001,
                       max = 5,
                       value = 1.3),
+          sliderInput(inputId = "k.d",
+                      label = "Death shape parameter:",
+                      min = -1,
+                      max = 20,
+                      value = 1),
 
           ## Input: Slider for death ----
           sliderInput(inputId = "L.l",
                       label = "LTFU scale parameter:",
                       min = 2,
-                      max = 10,
-                      value = 5)
+                      max = 1000,
+                      value = 5),
+          sliderInput(inputId = "k.l",
+                      label = "LTFU shape parameter:",
+                      min = -1,
+                      max = 20,
+                      value = 1)
         ),
 
         ## Main panel for displaying outputs ----
@@ -48,12 +69,13 @@ app_ui <- function(request) {
                       tabPanel(
                         title = "README",
                         value = "S1",
-                        h3("Background"),
-                        p("Explanations of what is happening and how to interpret"),
+                        h1("Background"),
+                        h2("Explanations of what is happening and how to interpret"),
                         tags$img(src = 'www/illustrations.png',
                                  width = '1000px'## ,
                                  ## style = 'position: absolute; position: absolute; width: 1024px; height: 768px;'
-                                 )
+                                 ),
+                        p(" Yet more text TODO")
                                         # code omitted
                       ),
                       tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),

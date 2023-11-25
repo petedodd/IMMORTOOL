@@ -6,22 +6,17 @@
 #' @noRd
 app_server <- function(input, output, session) {
   ## Your application server logic
-  ## TODO wrap these into smaller functions
-  ## create data
-  k.e <- k.d <- k.l <- 2
-  ## L.e <- 1
-  ## L.d <- 2
-  ## L.l <- 5
+  
   ITBoutput <- reactive({
-    ITBstats(N=1e4,
-             rtt.exposure = function(n) rweibull(n,k.e,input$L.e),
-             rtt.death = function(n) rweibull(n,k.d,input$L.d),
-             rtt.ltfu = function(n) rweibull(n,k.l,input$L.l))
+    ITBstats(N=1e4, Tstop=input$T.max,
+             rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
+             rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
+             rtt.ltfu = function(n) rweibull(n,input$k.l,input$L.l))
   })
 
 
   output$distPlot <- renderPlot({
-    makeDistPlots(inputs,k.e,k.d,k.l) #TODO
+    makeDistPlot(input)
   })
 
   output$resultPlot <- renderPlot({

@@ -4,7 +4,7 @@
 \alias{makeDistPlot}
 \title{makeDistPlot}
 \usage{
-makeDistPlot(inputs, k.e, k.d, k.l)
+makeDistPlot(input)
 }
 \arguments{
 \item{inputs}{a list of parameters containing the Weibull parameters for exposure (k.e, L.e), death (k.d, L.d), and ltfu (k.l, L.l)}
