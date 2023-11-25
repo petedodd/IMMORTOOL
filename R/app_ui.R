@@ -1,0 +1,96 @@
+#' The application User-Interface
+#'
+#' @param request Internal parameter for `{shiny}`.
+#'     DO NOT REMOVE.
+#' @import shiny
+#' @noRd
+app_ui <- function(request) {
+  tagList(
+    # Leave this function for adding external resources
+    golem_add_external_resources(),
+    # Your application UI logic
+    fluidPage(
+      h1("IMMORTOOL"),
+
+      ## TODO these things all need moving into modules!?
+
+      ## Sidebar layout with input and output definitions ----
+      sidebarLayout(
+
+        ## Sidebar panel for inputs ----
+        sidebarPanel(
+
+          ## Input: Slider for exposure ----
+          sliderInput(inputId = "L.e",
+                      label = "Exposure scale parameter:",
+                      min = 0.5,
+                      max = 5,
+                      value = 1),
+
+          ## Input: Slider for death ----
+          sliderInput(inputId = "L.d",
+                      label = "Death scale parameter:",
+                      min = 0.5,
+                      max = 5,
+                      value = 1.3),
+
+          ## Input: Slider for death ----
+          sliderInput(inputId = "L.l",
+                      label = "LTFU scale parameter:",
+                      min = 2,
+                      max = 10,
+                      value = 5)
+        ),
+
+        ## Main panel for displaying outputs ----
+        mainPanel(
+          tabsetPanel(type = "tabs",
+                      tabPanel(
+                        title = "README",
+                        value = "S1",
+                        h3("Background"),
+                        p("Explanations of what is happening and how to interpret"),
+                        tags$img(src = 'www/illustrations.png',
+                                 width = '1000px'## ,
+                                 ## style = 'position: absolute; position: absolute; width: 1024px; height: 768px;'
+                                 )
+                                        # code omitted
+                      ),
+                      tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),
+                      tabPanel("Distribution stats", tableOutput('dists')),
+                      tabPanel("Output Plot", plotOutput(outputId = "resultPlot")),
+                      tabPanel("Rates, method a", tableOutput('tableA1')),
+                      tabPanel("Rate ratio, method a", tableOutput('tableA2')),
+                      tabPanel("Rates, method b", tableOutput('tableB1')),
+                      tabPanel("Rate ratio, method b", tableOutput('tableB2'))
+                      )
+        )
+      )
+    )
+  )
+}
+
+#' Add external Resources to the Application
+#'
+#' This function is internally used to add external
+#' resources inside the Shiny application.
+#'
+#' @import shiny
+#' @importFrom golem add_resource_path activate_js favicon bundle_resources
+#' @noRd
+golem_add_external_resources <- function() {
+  add_resource_path(
+    "www",
+    app_sys("app/www")
+  )
+
+  tags$head(
+    favicon(),
+    bundle_resources(
+      path = app_sys("app/www"),
+      app_title = "IMMORTOOL"
+    )
+    # Add here other external resources
+    # for example, you can add shinyalert::useShinyalert()
+  )
+}
