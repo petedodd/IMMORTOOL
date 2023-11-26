@@ -19,10 +19,66 @@ run_app()
 
 Depending on your system, this may open the app in a system web browser. You may need to stop the app from R by typing Cntrl-C or other exiting the function.
 
-Apart from the shiny app, a number of utility functions are provided that can be used without the GUI. These include:
+Apart from the shiny app, a number of utility functions are provided that can be used without the GUI: see below and additional documentation.
 
-* TODO 
+## Examples
 
+
+### van der Vaart et al.
+
+```R
+## mortality data and fit
+mortality.data <- cbind(c(7,30,90),c(25/298,76/298,103/298))
+mortality.parms <- getMortParz(mortality.data)
+
+##treatment data and fit
+treatment.data <- cbind(c(6,9,12),c(0.25,0.5,0.75)) # median & IQR for those treated
+treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
+
+##plot
+input <- c(mortality.parms,treatment.parms)
+input$T.max <- 90
+makeTMplot(input)
+
+```
+
+
+### Jones & Fowler (using Kumar et al)
+
+```R
+## mortality data and fit
+mortality.data <- cbind(c(14,28,90),c(0.107,0.143,0.173))
+mortality.parms <- getMortParz(mortality.data)
+
+##treatment data and fit
+treatment.data <- cbind(c(1),c((540-37)/540)) # 37 of treated > 1d 
+treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
+
+##plot
+input <- c(mortality.parms,treatment.parms)
+input$T.max <- 90
+makeTMplot(input)
+
+```
+
+
+### Kaul
+
+```R
+## mortality data and fit
+mortality.data <- cbind(c(7,30),c(0.5,0.66)) # 2 points is not ideal
+mortality.parms <- getMortParz(mortality.data)
+
+##treatment data and fit
+treatment.data <- cbind(c(1),c(0.5) # no data: assume median 1 day
+treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
+
+##plot
+input <- c(mortality.parms,treatment.parms)
+input$T.max <- 90
+makeTMplot(input)
+
+```
 
 
 ### License ###
