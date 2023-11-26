@@ -5,7 +5,7 @@ Tool to explore the potential for immortal time bias
 ## Installation & use ##
 
 
-If you have the `devtools` package installed, you can install `IMMORTOOL` with the following commend from R:
+If you have the `devtools` package installed, you can install `IMMORTOOL` with the following command from R:
 
 ```R
 devtools::install_github('petedodd/IMMORTOOL',dependencies=TRUE)
