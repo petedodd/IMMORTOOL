@@ -17,7 +17,7 @@ library(IMMORTOOL)
 run_app()
 ```
 
-Depending on your system, this may open the app in a system web browser. You may need to stop the app from R by typing Cntrl-C or other exiting the function.
+Depending on your system, this may open the app in a system web browser. You may need to stop the app from R by typing Cntrl-C or otherwise exiting the function.
 
 Apart from the shiny app, a number of utility functions are provided that can be used without the GUI: see below and additional documentation.
 
@@ -28,11 +28,11 @@ Apart from the shiny app, a number of utility functions are provided that can be
 
 ```R
 ## mortality data and fit
-mortality.data <- cbind(c(7,30,90),c(25/298,76/298,103/298))
+mortality.data <- cbind(c(7,30,90),c(25/298,76/298,103/298)) #col1 = times; col2 = cumulative deaths
 mortality.parms <- getMortParz(mortality.data)
 
 ##treatment data and fit
-treatment.data <- cbind(c(6,9,12),c(0.25,0.5,0.75)) # median & IQR for those treated
+treatment.data <- cbind(c(6,9,12),c(0.25,0.5,0.75)) # median & IQR timings for those treated
 treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
 
 ##plot
