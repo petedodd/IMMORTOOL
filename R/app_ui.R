@@ -50,17 +50,24 @@ app_ui <- function(request) {
                       max = 20,
                       value = 1),
 
-          ## Input: Slider for death ----
-          sliderInput(inputId = "L.l",
-                      label = "LTFU scale parameter:",
-                      min = 2,
-                      max = 1000,
-                      value = 5),
-          sliderInput(inputId = "k.l",
-                      label = "LTFU shape parameter:",
-                      min = -1,
-                      max = 20,
-                      value = 1)
+          ## Input: Time for landmark analysis ---
+          sliderInput(inputId = "T.landmark",
+                      label = "Time for landmark analysis:",
+                      min = 1,
+                      max = 100,
+                      value = 3)
+
+          ## ## Input: Slider for death ----
+          ## sliderInput(inputId = "L.l",
+          ##             label = "LTFU scale parameter:",
+          ##             min = 2,
+          ##             max = 1000,
+          ##             value = 5),
+          ## sliderInput(inputId = "k.l",
+          ##             label = "LTFU shape parameter:",
+          ##             min = -1,
+          ##             max = 20,
+          ##             value = 1)
         ),
 
         ## Main panel for displaying outputs ----
