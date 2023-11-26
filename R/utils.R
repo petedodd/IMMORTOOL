@@ -126,3 +126,52 @@ makeEffectBySamplePlot <- function(ANS){
     ggplot2::geom_hline(yintercept=1,col='black',lty=3)+
     ggplot2::theme(legend.position='top')
 }
+
+
+## --- some smaller non-exported utilities ----
+
+##' Errors in cumulative mortality
+##'
+##' This function is a utility for fitting a Weibull to the observed mortality in a control arm.
+##'
+##' @title Residual for observed mortality at time T
+##' @param T A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
+##' @param km A proposed Weibull shape parameger
+##' @param Lm A proposed Weibull scale parameter
+##' @return The error as a difference
+##' @author Pete Dodd
+CFRET <- function(T,km,Lm) 1-exp(-(T[1]/Lm)^km) - T[2] #first arg time, second corresponding mort'y
+
+##' SSE mortality errors
+##'
+##' This is a utility function for fitting a Weibull to observed mortality in a control arm..
+##'
+##' @title SSE for fitting a Weibull to observed mortality
+##' @param M A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
+##' @param x A 2-vector equal to (log(Weibull shape), log(Weibull scale))
+##' @return The SSE for the Weibull and these data
+##' @author Pete Dodd
+morterr <- function(M,x){
+  x <- exp(x)
+  tmp <- apply(M,1,function(y) (CFRET(y,x[1],x[2]))^2) #vector of squared errors
+  sum(tmp)
+}
+
+
+##' For fitting to mortality data.
+##'
+##' This takes data from a control arm on cumulative mortality and fits a Weibull distribution to it so as to minimize the sum-of-squares error.
+##'
+##' @title Get the best-fit parameters for mortality
+##' @param M A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
+##' @return A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
+##' @author Pete Dodd
+##' @export
+getMortParz <- function(M){
+  out <- optim(par=c(0,0),fn=function(x)morterr(M,x))
+  ans <- list(k.d=exp(out$par[1]),L.d=exp(out$par[2]),converged=TRUE)
+  if(abs(out$convergence)>0) ans$converged <- FALSE
+  if(!ans$converged) warning('Mortality parameter fitting has not converged!')
+  ans
+}
+
