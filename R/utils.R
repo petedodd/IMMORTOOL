@@ -130,27 +130,29 @@ makeEffectBySamplePlot <- function(ANS){
 
 ## --- some smaller non-exported utilities ----
 
-##' Errors in cumulative mortality
-##'
-##' This function is a utility for fitting a Weibull to the observed mortality in a control arm.
-##'
-##' @title Residual for observed mortality at time T
-##' @param T A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
-##' @param km A proposed Weibull shape parameger
-##' @param Lm A proposed Weibull scale parameter
-##' @return The error as a difference
-##' @author Pete Dodd
+## == now for death times:
+
+## ' Errors in cumulative mortality
+## '
+## ' This function is a utility for fitting a Weibull to the observed mortality in a control arm.
+## '
+## ' @title Residual for observed mortality at time T
+## ' @param T A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
+## ' @param km A proposed Weibull shape parameger
+## ' @param Lm A proposed Weibull scale parameter
+## ' @return The error as a difference
+## ' @author Pete Dodd
 CFRET <- function(T,km,Lm) 1-exp(-(T[1]/Lm)^km) - T[2] #first arg time, second corresponding mort'y
 
-##' SSE mortality errors
-##'
-##' This is a utility function for fitting a Weibull to observed mortality in a control arm..
-##'
-##' @title SSE for fitting a Weibull to observed mortality
-##' @param M A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
-##' @param x A 2-vector equal to (log(Weibull shape), log(Weibull scale))
-##' @return The SSE for the Weibull and these data
-##' @author Pete Dodd
+## ' SSE mortality errors
+## '
+## ' This is a utility function for fitting a Weibull to observed mortality in a control arm..
+## '
+## ' @title SSE for fitting a Weibull to observed mortality
+## ' @param M A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
+## ' @param x A 2-vector equal to (log(Weibull shape), log(Weibull scale))
+## ' @return The SSE for the Weibull and these data
+## ' @author Pete Dodd
 morterr <- function(M,x){
   x <- exp(x)
   tmp <- apply(M,1,function(y) (CFRET(y,x[1],x[2]))^2) #vector of squared errors
@@ -175,3 +177,42 @@ getMortParz <- function(M){
   ans
 }
 
+
+
+## == now for exposure times:
+
+## density for staying alive and being exposed at time x
+dns <- function(x,ke,le,km,lm) dweibull(x,shape=ke,scale=le) * exp(-(x/lm)^km)
+## normalization for the above
+norm <- function(T,ke,le,km,lm) integrate(function(x) dns(x,ke,le,km,lm),lower=0,upper=T)$value
+## pdf for exposure time conditional on receiving exposure
+normq <- function(T,ke,le,km,lm) norm(T,ke,le,km,lm)/norm(Inf,ke,le,km,lm)
+
+## error for treatment/exposure, as above
+experr <- function(M,x){
+  x <- exp(x)
+  tmp <- apply(M,1,function(y) (normq(y[1],x[1],x[2],x[3],x[4])-y[2])^2) #vector of squared errors
+  sum(tmp)
+}
+
+
+
+##' For fitting to treatment data.
+##'
+##' This takes data on cumulative percentiles of cumulative treatment among those treated, and fits a Weibull distribution to it so as to minimize the sum-of-squares error, taking into account the competing hazard of death.
+##'
+##' @title Get the best-fit parameters for treatment
+##' @param M A 2xN matrix: the first column being observation times; the second column being cumulative fraction treated at each time in the cohort of those who are ultimately treated
+##' @param km The best-fit Weibull shape parameter for mortality
+##' @param lm The best-fit Weibull scale parameter for mortality
+##' @return A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
+##' @author Pete Dodd
+##' @export
+getTxParz <- function(M,km,lm){
+  y <- log(c(km,lm))
+  out <- optim(par=c(0,0),fn=function(x) experr(M,c(x,y)))
+  ans <- list(k.e=exp(out$par[1]),L.e=exp(out$par[2]),converged=TRUE)
+  if(abs(out$convergence)>0) ans$converged <- FALSE
+  if(!ans$converged) warning('Treatment parameter fitting has not converged!')
+  ans
+}

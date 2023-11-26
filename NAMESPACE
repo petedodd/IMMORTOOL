@@ -2,6 +2,7 @@
 
 export(ITBstats)
 export(getMortParz)
+export(getTxParz)
 export(makeDistPlot)
 export(makeEffectBySamplePlot)
 export(run_app)
