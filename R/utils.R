@@ -86,11 +86,11 @@ ITBstats <- function(N=1e4,           #simulation cohort size
 makeDistPlot <- function(input){
   ggplot2::ggplot() +
     ggplot2::xlim(0,input$T.max) +
-    ggplot2::geom_function(aes(colour="exposure"),fun=dweibull,
+    ggplot2::geom_function(ggplot2::aes(colour="exposure"),fun=dweibull,
                            args=list(shape=input$k.e,scale=input$L.e)) +
-    ggplot2::geom_function(aes(colour="death"),fun=dweibull,
+    ggplot2::geom_function(ggplot2::aes(colour="death"),fun=dweibull,
                            args=list(shape=input$k.d,scale=input$L.d)) +
-    ggplot2::geom_function(aes(colour="LTBU"),fun=dweibull,
+    ggplot2::geom_function(ggplot2::aes(colour="LTBU"),fun=dweibull,
                            args=list(shape=input$k.l,scale=input$L.l)) +
     ggplot2::xlab('Time') + ggplot2::ylab('') +
     ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
@@ -118,14 +118,41 @@ makeEffectBySamplePlot <- function(ANS){
   pfd[,RRhi:=exp(log(value) + 1.96*SElnIRR1/sqrt(n))]
   pfd[,RRlo:=exp(log(value) - 1.96*SElnIRR1/sqrt(n))]
   pfd[,analysis:=type]
-  ggplot2::ggplot(pfd,aes(x=n,y=value,ymin=RRlo,ymax=RRhi,col=analysis,group=analysis))+
+  ggplot2::ggplot(pfd,ggplot2::aes(x=n,y=value,ymin=RRlo,ymax=RRhi,col=analysis,group=analysis))+
     ggplot2::geom_line()+## geom_pointrange()+
-    ggplot2::geom_line(aes(y=RRhi),lty=2)+
-    ggplot2::geom_line(aes(y=RRlo),lty=2)+
+    ggplot2::geom_line(ggplot2::aes(y=RRhi),lty=2)+
+    ggplot2::geom_line(ggplot2::aes(y=RRlo),lty=2)+
     ggplot2::xlab('Sample size')+ggplot2::ylab('Rate ratio')+
     ggplot2::geom_hline(yintercept=1,col='black',lty=3)+
     ggplot2::theme(legend.position='top')
 }
+
+## Weibull scaled to have max height = 1
+dweibull1 <- function(x,shape,scale){
+  kk <- (shape-1)/shape
+  dweibull(x=x,shape=shape,scale=scale)/
+    ((shape/scale) * (kk^kk) * exp(-kk) )
+}
+
+##' Plot survival and treatment distributions.
+##'
+##' The plot returned is the survival (from death) function with a scaled time-to-treatment distribution superimposed. Note: the time-to-treatment distribution will differ from the time-to-treatment distribution in the data due to competition with mortality. The competition with mortality is accounted for in fitting and simulation, but not in this plot.
+##' @title Plot survival and treatment distributions.
+##' @param input a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d), and the maximum time (T.max).
+##' @return A plot with survival and treatment times
+##' @author Pete Dodd
+##' @export
+makeTMplot <- function(input){
+  ggplot2::ggplot() +
+    ggplot2::xlim(0,input$T.max) +
+    ggplot2::geom_function(ggplot2::aes(colour="exposure times"),fun=dweibull1,
+                           args=list(shape=input$k.e,scale=input$L.e),n=1e3) +
+    ggplot2::geom_function(ggplot2::aes(colour="survival function"),
+                           fun=function(x) exp(-(x/input$L.d)^input$k.d),n=1e3) +
+    ggplot2::xlab('Time') + ggplot2::ylab('') +
+    ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
+}
+
 
 
 ## --- some smaller non-exported utilities ----
