@@ -38,12 +38,12 @@ treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parm
 ##plot
 input <- c(mortality.parms,treatment.parms)
 input$T.max <- 90
-makeTMplot(input)
+makeTMplot(input) #NOTE unlike fitting & simulation, the treatment timing plot excludes competing mortality
 
 ```
 
 
-### Jones & Fowler (using Kumar et al)
+### Jones & Fowler (using Kumar et al.)
 
 ```R
 ## mortality data and fit
@@ -62,7 +62,7 @@ makeTMplot(input)
 ```
 
 
-### Kaul
+### Kaul et al.
 
 ```R
 ## mortality data and fit
@@ -70,7 +70,7 @@ mortality.data <- cbind(c(7,30),c(0.5,0.66)) # 2 points is not ideal
 mortality.parms <- getMortParz(mortality.data)
 
 ##treatment data and fit
-treatment.data <- cbind(c(1),c(0.5) # no data: assume median 1 day
+treatment.data <- cbind(c(1),c(0.5)) # no data: assume median 1 day
 treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
 
 ##plot
