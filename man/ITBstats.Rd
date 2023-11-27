@@ -7,6 +7,7 @@
 ITBstats(
   N = 10000,
   Tstop = 90,
+  Tlandmark = 1,
   rtt.exposure,
   rtt.death,
   rtt.ltfu,
@@ -16,6 +17,10 @@ ITBstats(
 }
 \arguments{
 \item{N}{The size of the cohort for simulation (unrelated to the experimental study cohort size)}
+
+\item{Tstop}{The time at which observation stops}
+
+\item{Tlandmark}{The time used for a landmark analysis}
 
 \item{rtt.exposure}{random time-to-exposure generator}
 

@@ -6,6 +6,8 @@
 ##' 
 ##' @title ITBstats
 ##' @param N The size of the cohort for simulation (unrelated to the experimental study cohort size)
+##' @param Tstop The time at which observation stops
+##' @param Tlandmark The time used for a landmark analysis
 ##' @param rtt.exposure random time-to-exposure generator
 ##' @param rtt.death random time-to-death generator
 ##' @param rtt.ltfu random time-to-ltfu generator
@@ -17,13 +19,13 @@
 ##' @import gmodels
 ITBstats <- function(N=1e4,           #simulation cohort size
                      Tstop=90,        #end time TODO include below w/slider
+                     Tlandmark=1,     #time used in landmark analysis
                      rtt.exposure,    #random time-to-exposure
                      rtt.death,       #random time-to-death
                      rtt.ltfu,        #random time-to-ltfu
                      returnraw=FALSE, #return TZ
                      ...
                      ){
-  ## TODO set seed
   ## create cohort
   TZ <- data.table::data.table(t.e=rtt.exposure(N),
                    t.d=rtt.death(N),
@@ -51,14 +53,28 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPT2[,rate:=deaths/PT]
   (RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate)
 
+  ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
+  TZL <- TZ[t.d < Tlandmark | t.l < Tlandmark]
+  cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
+  TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark
+  TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
+  TZL[1:floor(nrow(TZL)/2),exposed:=FALSE] #ensure some non-exposed
+  TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]            #TODO check from Tlandmark
+  NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
+  NPTL[,rate:=deaths/PT]
+  (RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate)
+
   ## return
   if(!returnraw){
-    list(table.a=NPT,RR.a=RR2,table.b=NPT2,RR.b=RR3,
+    list(table.a=NPT,RR.a=RR2,table.b=NPT2,RR.b=RR3,RR.c=RRL,
          F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
          suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
          suissa.p=suissa.p,
+         ## TODO document this: not sure relevant to onward calx
+         ## https://sphweb.bumc.bu.edu/otlt/mph-modules/ep/ep713_randomerror/ep713_randomerror4.html
          SElnIRR1.a = sqrt(N*sum(1/NPT$deaths)),
-         SElnIRR1.b = sqrt(N*sum(1/NPT2$deaths))
+         SElnIRR1.b = sqrt(N*sum(1/NPT2$deaths)),
+         SElnIRR1.c = sqrt(N*sum(1/NPTL$deaths)),
          )
   } else {
     return(TZ)
