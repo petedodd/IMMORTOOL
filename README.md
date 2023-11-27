@@ -40,6 +40,12 @@ input <- c(mortality.parms,treatment.parms)
 input$T.max <- 90
 makeTMplot(input) #NOTE unlike fitting & simulation, the treatment timing plot excludes competing mortality
 
+## run cohort
+ans.vdV <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
+                    rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
+                    rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
+                    rtt.ltfu = function(n) rweibull(n,1,36500))
+
 ```
 
 
@@ -58,6 +64,12 @@ treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parm
 input <- c(mortality.parms,treatment.parms)
 input$T.max <- 90
 makeTMplot(input)
+
+## run cohort
+ans.JnF <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
+                    rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
+                    rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
+                    rtt.ltfu = function(n) rweibull(n,1,36500))
 
 ```
 
@@ -78,7 +90,27 @@ input <- c(mortality.parms,treatment.parms)
 input$T.max <- 90
 makeTMplot(input)
 
+## run cohort
+ans.Kaul <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
+                    rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
+                    rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
+                    rtt.ltfu = function(n) rweibull(n,1,36500))
+
 ```
+
+### Combined:
+
+Looking at these together:
+
+```R
+
+## combine answers:
+ANS <- data.frame(author=c('vdv','JnF','Kaul'),
+                  A = c(ans.vdV$RR.a,ans.JnF$RR.a,ans.Kaul$RR.a),
+                  B = c(ans.vdV$RR.b,ans.JnF$RR.b,ans.Kaul$RR.b))
+
+```
+
 
 
 ### License ###

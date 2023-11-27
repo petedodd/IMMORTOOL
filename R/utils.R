@@ -74,7 +74,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
          ## https://sphweb.bumc.bu.edu/otlt/mph-modules/ep/ep713_randomerror/ep713_randomerror4.html
          SElnIRR1.a = sqrt(N*sum(1/NPT$deaths)),
          SElnIRR1.b = sqrt(N*sum(1/NPT2$deaths)),
-         SElnIRR1.c = sqrt(N*sum(1/NPTL$deaths)),
+         SElnIRR1.c = sqrt(N*sum(1/NPTL$deaths))
          )
   } else {
     return(TZ)
