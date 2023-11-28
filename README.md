@@ -83,12 +83,12 @@ mortality.data <- cbind(c(7,30),c(0.5,0.66)) # 2 points is not ideal
 mortality.parms <- getMortParz(mortality.data)
 
 ##treatment data and fit
-treatment.data <- cbind(c(1),c(0.5)) # no data: assume median 1 day
+treatment.data <- cbind(c(1/2),c(0.5)) # no data: assume median 1 day
 treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
 
 ##plot
 input <- c(mortality.parms,treatment.parms)
-input$T.max <- 90
+input$T.max <- 30
 makeTMplot(input)
 
 ## run cohort
