@@ -45,7 +45,7 @@ ans.vdV <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
                     rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
                     rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
                     rtt.ltfu = function(n) rweibull(n,1,36500))
-
+N.vdV <- list(a=103,b=44) #event counts (deaths)
 ```
 
 
@@ -70,6 +70,7 @@ ans.JnF <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
                     rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
                     rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
                     rtt.ltfu = function(n) rweibull(n,1,36500))
+N.JnF <- list(a=12,b=105) #event counts
 
 ```
 
@@ -91,10 +92,12 @@ input$T.max <- 90
 makeTMplot(input)
 
 ## run cohort
-ans.Kaul <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
+ans.Kaul <- ITBstats(N=1e4,Tstop=30,Tlandmark=1,
                     rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
                     rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
                     rtt.ltfu = function(n) rweibull(n,1,36500))
+
+N.Kaul <- list(a=11,b=14)
 
 ```
 
@@ -103,11 +106,16 @@ ans.Kaul <- ITBstats(N=1e4,Tstop=90,Tlandmark=1,
 Looking at these together:
 
 ```R
-
 ## combine answers:
-ANS <- data.frame(author=c('vdv','JnF','Kaul'),
-                  A = c(ans.vdV$RR.a,ans.JnF$RR.a,ans.Kaul$RR.a),
-                  B = c(ans.vdV$RR.b,ans.JnF$RR.b,ans.Kaul$RR.b))
+CIfac <- function(L) exp(1.96*sqrt(1/L$a+1/L$b)) #for approx CIs
+F <- unlist(lapply(list(N.vdV,N.JnF,N.Kaul),CIfac))
+A <- c(ans.vdV$RR.a,ans.JnF$RR.a,ans.Kaul$RR.a)
+B <- c(ans.vdV$RR.b,ans.JnF$RR.b,ans.Kaul$RR.b)
+A <- paste0(signif(A,2)," (",signif(A/F,2),"-",signif(A*F,2),")") #format CIs
+B <- paste0(signif(B,2)," (",signif(B/F,2),"-",signif(B*F,2),")")
+
+## table:
+ANS <- data.frame(author=c('vdv','JnF','Kaul'),A = A,B = B)
 
 ```
 
