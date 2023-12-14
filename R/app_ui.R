@@ -85,13 +85,32 @@ app_ui <- function(request) {
                         p(" Yet more text TODO")
                                         # code omitted
                       ),
+                      tabPanel("Fitting distributions",
+                               value="S1",
+                               h2("Adjust how many data points there are for mortality/treatment, then press button to fit."),
+                               h3("Times and fractions should increase (mortality is cumulative)."),
+                               fluidRow(
+                                 column(width=6,
+                                        numericInput("mortnum", "Number of mortality datapoints",
+                                                     value = 3, min = 2, max = 5),
+                                        uiOutput("morttimeinput"),
+                                        uiOutput("mortfracinput")),
+                                 column(width=6,
+                                        numericInput("TTEnum", "Number of treatment time data points",
+                                                     value = 1, min = 1, max = 5),
+                                        uiOutput("TTEtimeinput"),
+                                        uiOutput("TTEfracinput"))
+                               ),
+                               actionButton("do", "Try to fit!"),
+                               textOutput('fits')
+                               ),
                       tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),
                       tabPanel("Distribution stats", tableOutput('dists')),
-                      tabPanel("Output Plot", plotOutput(outputId = "resultPlot")),
-                      tabPanel("Rates, method a", tableOutput('tableA1')),
-                      tabPanel("Rate ratio, method a", tableOutput('tableA2')),
-                      tabPanel("Rates, method b", tableOutput('tableB1')),
-                      tabPanel("Rate ratio, method b", tableOutput('tableB2'))
+                      tabPanel("Output Plot", plotOutput(outputId = "resultPlot"))#,
+                      ## tabPanel("Rates, method a", tableOutput('tableA1')),
+                      ## tabPanel("Rate ratio, method a", tableOutput('tableA2')),
+                      ## tabPanel("Rates, method b", tableOutput('tableB1')),
+                      ## tabPanel("Rate ratio, method b", tableOutput('tableB2'))
                       )
         )
       )
