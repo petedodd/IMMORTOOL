@@ -79,7 +79,7 @@ app_server <- function(input, output, session) {
       if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
       T <- getTxParz(TD,D$k.d,D$L.d)
     }
-    
+
     if(!D$converged){
       txt <- 'Unfortunately, the mortality fit did not converge!'
     } else if(!T$converged){
@@ -101,6 +101,10 @@ app_server <- function(input, output, session) {
   ## ---- other stuff -------
   output$distPlot <- renderPlot({
     makeDistPlot(input)
+  })
+
+  output$TMPlot <- renderPlot({
+    makeTMplot(input)
   })
 
   output$resultPlot <- renderPlot({
