@@ -28,7 +28,7 @@ ITBstats(
 
 \item{rtt.ltfu}{random time-to-ltfu generator}
 
-\item{returnraw}{Logical (default FALSE) controlling return type. If true, the raw cohort will be returned. Otherwise, a list of summary statistics will be returned}
+\item{returnraw}{Logical (default FALSE) controlling return type. If true, a list comprising the raw cohort and the raw landmark cohort will be returned. Otherwise, a list of summary statistics will be returned}
 }
 \value{
 Depends on [returnraw]

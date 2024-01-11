@@ -11,7 +11,7 @@
 ##' @param rtt.exposure random time-to-exposure generator
 ##' @param rtt.death random time-to-death generator
 ##' @param rtt.ltfu random time-to-ltfu generator
-##' @param returnraw Logical (default FALSE) controlling return type. If true, the raw cohort will be returned. Otherwise, a list of summary statistics will be returned
+##' @param returnraw Logical (default FALSE) controlling return type. If true, a list comprising the raw cohort and the raw landmark cohort will be returned. Otherwise, a list of summary statistics will be returned
 ##' @return Depends on [returnraw]
 ##' @author Pete Dodd
 ##' @export
@@ -54,7 +54,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   (RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate)
 
   ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
-  TZL <- TZ[t.d < Tlandmark | t.l < Tlandmark]
+  TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
   cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
   TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark
   TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
@@ -77,7 +77,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
          SElnIRR1.c = sqrt(N*sum(1/NPTL$deaths))
          )
   } else {
-    return(TZ)
+    return(list(cohort=TZ,landmark.cohort=TZL))
   }
 }
 
