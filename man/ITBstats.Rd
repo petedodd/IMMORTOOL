@@ -23,7 +23,7 @@ ITBstats(
 
 \item{Tlandmark}{The time used for a landmark analysis}
 
-\item{Tdeathexc}{The time used for exclude early deaths analysis}
+\item{Tdeathexc}{The time used for exclude early unexposed deaths analysis}
 
 \item{rtt.exposure}{random time-to-exposure generator}
 
