@@ -8,6 +8,7 @@
 ##' @param N The size of the cohort for simulation (unrelated to the experimental study cohort size)
 ##' @param Tstop The time at which observation stops
 ##' @param Tlandmark The time used for a landmark analysis
+##' @param Tdeathexc The time used for exclude early deaths analysis
 ##' @param rtt.exposure random time-to-exposure generator
 ##' @param rtt.death random time-to-death generator
 ##' @param rtt.ltfu random time-to-ltfu generator
@@ -20,6 +21,7 @@
 ITBstats <- function(N=1e4,           #simulation cohort size
                      Tstop=90,        #end time TODO include below w/slider
                      Tlandmark=1,     #time used in landmark analysis
+                     Tdeathexc=0,     #time for exclude early deaths analysis
                      rtt.exposure,    #random time-to-exposure
                      rtt.death,       #random time-to-death
                      rtt.ltfu,        #random time-to-ltfu
@@ -30,7 +32,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   TZ <- data.table::data.table(t.e=rtt.exposure(N),
                    t.d=rtt.death(N),
                    t.l=rtt.ltfu(N))
-
+  ## NOTE these exposed/dead categories are used in analyses a & b & d, reset in landmark (c)
   TZ[,exposed:=ifelse(t.e<pmin(t.d,t.l,Tstop),TRUE,FALSE)]
   TZ[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
   TZ[1:floor(N/2),exposed:=FALSE] #ensure some non-exposed
@@ -45,6 +47,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPT[,rate:=deaths/PT]
   (RR2 <- NPT[exposed==TRUE]$rate / NPT[exposed==FALSE]$rate)
 
+  ## Suissa stats
   suissa.p <- TZ[exposed==TRUE,sum(t.e)/sum(PTa)] #Suissa p fraction of T1 that us U
 
   ## b) person time from exposure
@@ -58,26 +61,34 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
   TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark
   TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
-  TZL[1:floor(nrow(TZL)/2),exposed:=FALSE] #ensure some non-exposed
-  TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]            #TODO check from Tlandmark
+  TZL[1:floor(nrow(TZL)/2),exposed:=FALSE] #ensure some non-exposed TODO check
+  TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]
   NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTL[,rate:=deaths/PT]
   (RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate)
 
+  ## d) excluding deaths beyond Tdeathexc
+  TZE <- TZ[!(t.d < Tdeathexc | t.l < Tdeathexc)]
+  cat('Exclude early deaths dropping ', nrow(TZ)-nrow(TZE),' patients from ',nrow(TZ),'\n')
+  TZE[,PT:=pmin(t.d,t.l,Tstop)]            #NOTE not resetting clock
+  NPTE <- TZE[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
+  NPTE[,rate:=deaths/PT]
+  (RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate)
+
   ## return
   if(!returnraw){
-    list(table.a=NPT,RR.a=RR2,table.b=NPT2,RR.b=RR3,RR.c=RRL,
+    list(table.a=NPT,RR.a=RR2,  #person time from 0
+         table.b=NPT2,RR.b=RR3, #person time from exposure
+         table.c=NPTL,RR.c=RRL, #landmark
+         table.d=NPTE,RR.d=RRE, #exclude early deaths
          F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
          suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
-         suissa.p=suissa.p,
+         suissa.p=suissa.p
          ## TODO document this: not sure relevant to onward calx
          ## https://sphweb.bumc.bu.edu/otlt/mph-modules/ep/ep713_randomerror/ep713_randomerror4.html
-         SElnIRR1.a = sqrt(N*sum(1/NPT$deaths)),
-         SElnIRR1.b = sqrt(N*sum(1/NPT2$deaths)),
-         SElnIRR1.c = sqrt(N*sum(1/NPTL$deaths))
          )
   } else {
-    return(list(cohort=TZ,landmark.cohort=TZL))
+    return(list(cohort=TZ,landmark.cohort=TZL,earlydeath.cohort=TZE))
   }
 }
 

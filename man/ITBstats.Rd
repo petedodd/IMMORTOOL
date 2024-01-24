@@ -8,6 +8,7 @@ ITBstats(
   N = 10000,
   Tstop = 90,
   Tlandmark = 1,
+  Tdeathexc = 0,
   rtt.exposure,
   rtt.death,
   rtt.ltfu,
@@ -21,6 +22,8 @@ ITBstats(
 \item{Tstop}{The time at which observation stops}
 
 \item{Tlandmark}{The time used for a landmark analysis}
+
+\item{Tdeathexc}{The time used for exclude early deaths analysis}
 
 \item{rtt.exposure}{random time-to-exposure generator}
 
