@@ -77,13 +77,23 @@ app_ui <- function(request) {
                         title = "README",
                         value = "S1",
                         h1("Background"),
-                        h2("Explanations of what is happening and how to interpret"),
+                        h2("Immortal time bias"),
                         tags$img(src = 'www/illustrations.png',
                                  width = '1000px'## ,
-                                 ## style = 'position: absolute; position: absolute; width: 1024px; height: 768px;'
+   ## style = 'position: absolute; position: absolute; width: 1024px; height: 768px;'
                                  ),
-                        p(" Yet more text TODO")
-                                        # code omitted
+                        p("Immortal time bias is illustrated in the above diagram. By definition, the outcome cannot occur before the exposure. "),
+                        h2("Analysis A"),
+                        tags$img(src = 'www/analysisA.png',width = '1000px'),
+                        p("The most basic approach is simply to consider all time in those ultimately exposed as exposed. This misclassifies some unexposed time as exposed. In IMMORTOOL output the rate ratio for this analysis is labelled 'a'."),
+                        h2("Analysis B"),
+                        tags$img(src = 'www/analysisB.png',width = '1000px'),
+                        p("Another approach occasionally used ignores the unexposed time in those ultimately exposed. In IMMORTOOL output the rate ratio for this analysis is labelled 'b'."),
+                        h2("Analysis C"),
+                        tags$img(src = 'www/analysisC.png',width = '1000px'),
+                        p("Landmark analysis attempts to mitigate the effects of immortal time bias in two ways: 1) Those dying before landmark time are excluded; 2) Those exposed after landmark are considered unexposed. In IMMORTOOL output the rate ratio for this analysis is labelled 'c'."),
+                        p(" ")
+                        ## code omitted
                       ),
                       tabPanel("Fitting distributions",
                                value="S1",
