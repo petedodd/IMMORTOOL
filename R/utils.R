@@ -273,3 +273,112 @@ getTxParz <- function(M,km,lm){
   if(!ans$converged) warning('Treatment parameter fitting has not converged!')
   ans
 }
+
+
+##' For computing a factor for approximate IRR CIs
+##'
+##' For computing a factor for approximate IRR CIs.
+##' @title CIfactor
+##' @param N the number of deaths observed
+##' @param frac.deaths.control the fraction of deaths that are expected in the control arm (returned by ITBstats)
+##' @return A factor for computation of approximate CIs. High = mid * factor; Low = mid / factor.
+##' @author Pete Dodd
+##' @export
+CIfactor <- function(N, frac.deaths.control) {
+  a <- N * frac.deaths.control
+  b <- N * (1 - frac.deaths.control)
+  exp(1.96 * sqrt(1 / a + 1 / b)) # for approx CIs
+}
+
+
+##' A shortcut function to generate all results
+##'
+##' This is a shortcut function to fit to mortality and treatment data and return results. This uses a cohort of 10,000 by default.
+##' @title Make Results List
+##' @param mortality.times a vector of mortality data times
+##' @param mortality.fracs a vector of mortality fractions corresponding to times
+##' @param treatment.times a vector of treatment data times
+##' @param treatment.fracs a vector of corresponding treatment fractions
+##' @param N the number of deaths observed (for CIs)
+##' @param Tmax the maximum time horizon
+##' @param Tlandmark the time used in landmark analysis
+##' @param Tearly the time used in the drop-early-events & time analysis
+##' @param ... any extras
+##' @param frac.deaths.control the fraction of deaths that are expected in the control arm (returned by ITBstats)
+##' @return A list of results from ITBstats together with the number of deaths
+##' @author Pete Dodd
+##' @export
+makeResultList <- function(mortality.times, mortality.fracs,
+                           treatment.times, treatment.fracs,
+                           N,
+                           Tmax = 30, Tlandmark = 1, Tearly = 1, ...) {
+
+  ## mortality data and fit
+  mortality.data <- cbind(mortality.times, mortality.fracs)
+  mortality.parms <- getMortParz(mortality.data)
+
+  ## treatment data and fit
+  treatment.data <- cbind(treatment.times, treatment.fracs)
+  treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
+
+  ## combine
+  input <- c(mortality.parms, treatment.parms)
+  input$T.max <- Tmax
+
+  # run cohort
+  ans <- ITBstats(
+    N = 1e4, Tstop = Tmax, Tlandmark = Tlandmark, Texc = Tearly,
+    rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
+    rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
+    rtt.ltfu = function(n) rweibull(n, 1, 36500)
+  )
+  ans$N <- N # add in total observed deaths
+
+  ## return
+  ans
+}
+
+
+##' For generating a results table from a list of individual study results
+##'
+##' Generates a results table including CIs for analyses a)-d) of ITB stats as well as the fraction of deaths expected to occur in the control arm.
+##' @title Make a table of results
+##' @param list.of.results a named list of results from makeResultList, ie from ITBstats with N=#deaths appended
+##' @return a data frame of results for all elements in the list
+##' @author Pete Dodd
+##' @export
+makeCItable <- function(list.of.results){
+  ## names
+  nmz <- names(list.of.results)
+  ## numbers
+  Nz <- unlist(lapply(list.of.results,function(X)X[['N']]))
+  ## mid-points
+  Az <- unlist(lapply(list.of.results,function(X)X[['RR.a']]))
+  Bz <- unlist(lapply(list.of.results,function(X)X[['RR.b']]))
+  Cz <- unlist(lapply(list.of.results,function(X)X[['RR.c']]))
+  Dz <- unlist(lapply(list.of.results,function(X)X[['RR.d']]))
+  ## death fractions
+  faz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.a']]))
+  fbz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.b']]))
+  fcz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.c']]))
+  fdz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.d']]))
+  ## CI factors
+  FAZ <- CIfactor(Nz,faz)
+  FBZ <- CIfactor(Nz,fbz)
+  FCZ <- CIfactor(Nz,fcz)
+  FDZ <- CIfactor(Nz,fdz)
+  ## formatted CIs
+  A <- paste0(signif(Az,2)," (",signif(Az/FAZ,2),"-",signif(Az*FAZ,2),")") #format CIs
+  B <- paste0(signif(Bz,2)," (",signif(Bz/FBZ,2),"-",signif(Bz*FBZ,2),")") #format CIs
+  C <- paste0(signif(Cz,2)," (",signif(Cz/FCZ,2),"-",signif(Cz*FCZ,2),")") #format CIs
+  D <- paste0(signif(Dz,2)," (",signif(Dz/FDZ,2),"-",signif(Dz*FDZ,2),")") #format CIs
+  ## answer
+  tab <- data.frame(id=nmz,N=Nz,
+                    RR.a=Az,RR.b=Bz,RR.c=Cz,RR.d=Dz,
+                    frac.d.control.a=faz,frac.d.control.b=fbz,
+                    frac.d.control.c=fcz,frac.d.control.d=fdz,
+                    F.a=FAZ,F.b=FBZ,F.c=FCZ,F.d=FDZ,
+                    CI.a=A,CI.b=B,CI.c=C,CI.d=D)
+  rownames(tab) <- NULL
+  tab
+}
