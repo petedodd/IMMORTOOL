@@ -1,5 +1,4 @@
 ## the non-shiny functions
-
 ##' Function to simulate a cohort
 ##'
 ##' This function will simulate a cohort with relevant times-to-event under a null assumption for the treatment effect. Typical use returns summary statistics.
@@ -46,6 +45,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPT <- TZ[,.(deaths=sum(died),PT=sum(PTa)),by=exposed]
   NPT[,rate:=deaths/PT]
   (RR2 <- NPT[exposed==TRUE]$rate / NPT[exposed==FALSE]$rate)
+  frac.d.control.a <- TZ[died==TRUE,mean(!exposed)]
 
   ## Suissa stats
   suissa.p <- TZ[exposed==TRUE,sum(t.e)/sum(PTa)] #Suissa p fraction of T1 that us U
@@ -55,6 +55,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPT2 <- TZ[,.(deaths=sum(died),PT=sum(PTb)),by=exposed]
   NPT2[,rate:=deaths/PT]
   (RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate)
+  frac.d.control.b <- TZ[died==TRUE,mean(!exposed)]
 
   ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
   TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
@@ -66,21 +67,23 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTL[,rate:=deaths/PT]
   (RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate)
+  frac.d.control.c <- TZL[died==TRUE,mean(!exposed)]
 
-  ## d) excluding unexposed deaths beyond Tdeathexc
+  ## d) excluding early time TODO
   TZE <- TZ[!(t.d < Tdeathexc | t.l < Tdeathexc) & exposed==FALSE]
   cat('Exclude early unexposed deaths dropping ', nrow(TZ)-nrow(TZE),' patients from ',nrow(TZ),'\n')
   TZE[,PT:=pmin(t.d,t.l,Tstop)]            #NOTE not resetting clock
   NPTE <- TZE[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTE[,rate:=deaths/PT]
   (RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate)
+  frac.d.control.d <- TZE[died==TRUE,mean(!exposed)]
 
   ## return
   if(!returnraw){
-    list(table.a=NPT,RR.a=RR2,  #person time from 0
-         table.b=NPT2,RR.b=RR3, #person time from exposure
-         table.c=NPTL,RR.c=RRL, #landmark
-         table.d=NPTE,RR.d=RRE, #exclude early unexposed deaths
+    list(table.a=NPT,RR.a=RR2,frac.d.control.a=frac.d.control.a,  #person time from 0
+         table.b=NPT2,RR.b=RR3,frac.d.control.b=frac.d.control.b, #person time from exposure
+         table.c=NPTL,RR.c=RRL,frac.d.control.c=frac.d.control.c, #landmark
+         table.d=NPTE,RR.d=RRE,frac.d.control.d=frac.d.control.d, #exclude early unexposed deaths
          F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
          suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
          suissa.p=suissa.p
