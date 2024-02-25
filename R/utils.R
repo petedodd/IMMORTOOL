@@ -7,7 +7,7 @@
 ##' @param N The size of the cohort for simulation (unrelated to the experimental study cohort size)
 ##' @param Tstop The time at which observation stops
 ##' @param Tlandmark The time used for a landmark analysis
-##' @param Tdeathexc The time used for exclude early unexposed deaths analysis
+##' @param Texc The time used for exclude early events & time analysis
 ##' @param rtt.exposure random time-to-exposure generator
 ##' @param rtt.death random time-to-death generator
 ##' @param rtt.ltfu random time-to-ltfu generator
@@ -18,9 +18,9 @@
 ##' @import data.table
 ##' @import gmodels
 ITBstats <- function(N=1e4,           #simulation cohort size
-                     Tstop=90,        #end time TODO include below w/slider
+                     Tstop=90,        #end time
                      Tlandmark=1,     #time used in landmark analysis
-                     Tdeathexc=0,     #time for exclude early deaths analysis
+                     Texc=0,     #time for exclude early deaths analysis
                      rtt.exposure,    #random time-to-exposure
                      rtt.death,       #random time-to-death
                      rtt.ltfu,        #random time-to-ltfu
@@ -69,10 +69,10 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   (RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate)
   frac.d.control.c <- TZL[died==TRUE,mean(!exposed)]
 
-  ## d) excluding early time TODO
-  TZE <- TZ[!(t.d < Tdeathexc | t.l < Tdeathexc) & exposed==FALSE]
-  cat('Exclude early unexposed deaths dropping ', nrow(TZ)-nrow(TZE),' patients from ',nrow(TZ),'\n')
-  TZE[,PT:=pmin(t.d,t.l,Tstop)]            #NOTE not resetting clock
+  ## d) excluding early events & reset clock
+  TZE <- TZ[!(t.d < Texc | t.l < Texc)]
+  cat('Exclude early events dropping ', nrow(TZ)-nrow(TZE),' patients from ',nrow(TZ),'\n')
+  TZE[,PT:=pmin(t.d,t.l,Tstop)-Texc]            #NOTE resetting clock
   NPTE <- TZE[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTE[,rate:=deaths/PT]
   (RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate)
@@ -83,7 +83,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
     list(table.a=NPT,RR.a=RR2,frac.d.control.a=frac.d.control.a,  #person time from 0
          table.b=NPT2,RR.b=RR3,frac.d.control.b=frac.d.control.b, #person time from exposure
          table.c=NPTL,RR.c=RRL,frac.d.control.c=frac.d.control.c, #landmark
-         table.d=NPTE,RR.d=RRE,frac.d.control.d=frac.d.control.d, #exclude early unexposed deaths
+         table.d=NPTE,RR.d=RRE,frac.d.control.d=frac.d.control.d, #exclude early events
          F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
          suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
          suissa.p=suissa.p
@@ -91,7 +91,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
          ## https://sphweb.bumc.bu.edu/otlt/mph-modules/ep/ep713_randomerror/ep713_randomerror4.html
          )
   } else {
-    return(list(cohort=TZ,landmark.cohort=TZL,earlydeath.cohort=TZE))
+    return(list(cohort=TZ,landmark.cohort=TZL,excearlyevent.cohort=TZE))
   }
 }
 
