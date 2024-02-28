@@ -300,6 +300,7 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' @param treatment.times a vector of treatment data times
 ##' @param treatment.fracs a vector of corresponding treatment fractions
 ##' @param N the number of deaths observed (for CIs)
+##' @param simulation.cohort.size the size of the cohort used in the simulation
 ##' @param Tmax the maximum time horizon
 ##' @param Tlandmark the time used in landmark analysis
 ##' @param Tearly the time used in the drop-early-events & time analysis
@@ -310,7 +311,7 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' @export
 makeResultList <- function(mortality.times, mortality.fracs,
                            treatment.times, treatment.fracs,
-                           N,
+                           N,simulation.cohort.size=1e5,
                            Tmax = 30, Tlandmark = 1, Tearly = 1, ...) {
 
   ## mortality data and fit
@@ -327,7 +328,8 @@ makeResultList <- function(mortality.times, mortality.fracs,
 
   # run cohort
   ans <- ITBstats(
-    N = 1e4, Tstop = Tmax, Tlandmark = Tlandmark, Texc = Tearly,
+    N = simulation.cohort.size,
+    Tstop = Tmax, Tlandmark = Tlandmark, Texc = Tearly,
     rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
     rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
     rtt.ltfu = function(n) rweibull(n, 1, 36500)

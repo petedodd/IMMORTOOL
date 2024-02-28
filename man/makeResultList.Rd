@@ -10,6 +10,7 @@ makeResultList(
   treatment.times,
   treatment.fracs,
   N,
+  simulation.cohort.size = 1e+05,
   Tmax = 30,
   Tlandmark = 1,
   Tearly = 1,
@@ -26,6 +27,8 @@ makeResultList(
 \item{treatment.fracs}{a vector of corresponding treatment fractions}
 
 \item{N}{the number of deaths observed (for CIs)}
+
+\item{simulation.cohort.size}{the size of the cohort used in the simulation}
 
 \item{Tmax}{the maximum time horizon}
 
