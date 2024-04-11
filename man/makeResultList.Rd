@@ -24,7 +24,7 @@ makeResultList(
 
 \item{treatment.times}{a vector of treatment data times}
 
-\item{treatment.fracs}{a vector of corresponding treatment fractions}
+\item{treatment.fracs}{a vector of corresponding treatment fractions (denominator=those ultimately treated)}
 
 \item{N}{the number of deaths observed (for CIs)}
 

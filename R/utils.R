@@ -2,7 +2,7 @@
 ##' Function to simulate a cohort
 ##'
 ##' This function will simulate a cohort with relevant times-to-event under a null assumption for the treatment effect. Typical use returns summary statistics.
-##' 
+##'
 ##' @title ITBstats
 ##' @param N The size of the cohort for simulation (unrelated to the experimental study cohort size)
 ##' @param Tstop The time at which observation stops
@@ -12,7 +12,11 @@
 ##' @param rtt.death random time-to-death generator
 ##' @param rtt.ltfu random time-to-ltfu generator
 ##' @param returnraw Logical (default FALSE) controlling return type. If true, a list comprising the raw cohort and the raw landmark cohort will be returned. Otherwise, a list of summary statistics will be returned
-##' @return Depends on [returnraw]
+##' @return Depends on [returnraw].
+##'
+##' Note that if returnraw==FALSE, the following labels are used for analysis variants:
+##' a) person time from 0 (standard); b) person time from exposure; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
+##'
 ##' @author Pete Dodd
 ##' @export
 ##' @import data.table
@@ -34,7 +38,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   ## NOTE these exposed/dead categories are used in analyses a & b & d, reset in landmark (c)
   TZ[,exposed:=ifelse(t.e<pmin(t.d,t.l,Tstop),TRUE,FALSE)]
   TZ[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
-  TZ[1:floor(N/2),exposed:=FALSE] #ensure some non-exposed
+  TZ[1:floor(N/2),exposed:=FALSE] #ensure some non-exposed NOTE
 
   ## print?
   gmodels::CrossTable(TZ$exposed,TZ$died)
@@ -45,7 +49,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPT <- TZ[,.(deaths=sum(died),PT=sum(PTa)),by=exposed]
   NPT[,rate:=deaths/PT]
   (RR2 <- NPT[exposed==TRUE]$rate / NPT[exposed==FALSE]$rate)
-  frac.d.control.a <- TZ[died==TRUE,mean(!exposed)]
+  frac.d.control.a <- TZ[(floor(N/2)+1):N][died==TRUE,mean(!exposed)] #frac deaths in control (not xtra)
 
   ## Suissa stats
   suissa.p <- TZ[exposed==TRUE,sum(t.e)/sum(PTa)] #Suissa p fraction of T1 that us U
@@ -55,19 +59,21 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPT2 <- TZ[,.(deaths=sum(died),PT=sum(PTb)),by=exposed]
   NPT2[,rate:=deaths/PT]
   (RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate)
-  frac.d.control.b <- TZ[died==TRUE,mean(!exposed)]
+  frac.d.control.b <- TZ[(floor(N / 2) + 1):N][died == TRUE, mean(!exposed)]
 
   ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
   TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
   cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
   TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark
   TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
-  TZL[1:floor(nrow(TZL)/2),exposed:=FALSE] #ensure some non-exposed TODO check
+  M <- nrow(TZL)
+  TZL[1:floor(M/2),exposed:=FALSE] #ensure some non-exposed NOTE
   TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]
   NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTL[,rate:=deaths/PT]
   (RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate)
-  frac.d.control.c <- TZL[died==TRUE,mean(!exposed)]
+  TZLR <- TZ[(floor(N / 2) + 1):N][!(t.d < Tlandmark | t.l < Tlandmark)] # restrict 'true' CH  exposures
+  frac.d.control.c <- TZLR[died == TRUE, mean(!exposed)]
 
   ## d) excluding early events & reset clock
   TZE <- TZ[!(t.d < Texc | t.l < Texc)]
@@ -76,7 +82,8 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   NPTE <- TZE[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTE[,rate:=deaths/PT]
   (RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate)
-  frac.d.control.d <- TZE[died==TRUE,mean(!exposed)]
+  TZER <- TZ[(floor(N / 2) + 1):N][!(t.d < Texc | t.l < Texc)] # restrict 'true' CH  exposures
+  frac.d.control.d <- TZER[died==TRUE,mean(!exposed)]
 
   ## return
   if(!returnraw){
@@ -120,9 +127,9 @@ makeDistPlot <- function(input){
                            args=list(shape=input$k.e,scale=input$L.e)) +
     ggplot2::geom_function(ggplot2::aes(colour="death"),fun=dweibull,
                            args=list(shape=input$k.d,scale=input$L.d)) +
-    ggplot2::geom_function(ggplot2::aes(colour="LTBU"),fun=dweibull,
+    ggplot2::geom_function(ggplot2::aes(colour="LTFU"),fun=dweibull,
                            args=list(shape=input$k.l,scale=input$L.l)) +
-    ggplot2::xlab('Time') + ggplot2::ylab('') +
+    ggplot2::xlab('Time') + ggplot2::ylab('Hazard') +
     ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
 }
 
@@ -298,7 +305,7 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' @param mortality.times a vector of mortality data times
 ##' @param mortality.fracs a vector of mortality fractions corresponding to times
 ##' @param treatment.times a vector of treatment data times
-##' @param treatment.fracs a vector of corresponding treatment fractions
+##' @param treatment.fracs a vector of corresponding treatment fractions (denominator=those ultimately treated)
 ##' @param N the number of deaths observed (for CIs)
 ##' @param simulation.cohort.size the size of the cohort used in the simulation
 ##' @param Tmax the maximum time horizon

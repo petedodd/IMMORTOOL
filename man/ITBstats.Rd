@@ -34,7 +34,10 @@ ITBstats(
 \item{returnraw}{Logical (default FALSE) controlling return type. If true, a list comprising the raw cohort and the raw landmark cohort will be returned. Otherwise, a list of summary statistics will be returned}
 }
 \value{
-Depends on [returnraw]
+Depends on [returnraw].
+
+Note that if returnraw==FALSE, the following labels are used for analysis variants:
+a) person time from 0 (standard); b) person time from exposure; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
 }
 \description{
 Function to simulate a cohort
