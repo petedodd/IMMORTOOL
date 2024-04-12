@@ -20,11 +20,11 @@ makeResultList(
 \arguments{
 \item{mortality.times}{a vector of mortality data times}
 
-\item{mortality.fracs}{a vector of mortality fractions corresponding to times}
+\item{mortality.fracs}{a vector of mortality fractions among all patients corresponding to times}
 
 \item{treatment.times}{a vector of treatment data times}
 
-\item{treatment.fracs}{a vector of corresponding treatment fractions (denominator=those ultimately treated)}
+\item{treatment.fracs}{a vector of corresponding treatment fractions among all patients}
 
 \item{N}{the number of deaths observed (for CIs)}
 

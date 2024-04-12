@@ -38,18 +38,18 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   ## NOTE these exposed/dead categories are used in analyses a & b & d, reset in landmark (c)
   TZ[,exposed:=ifelse(t.e<pmin(t.d,t.l,Tstop),TRUE,FALSE)]
   TZ[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
-  TZ[1:floor(N/2),exposed:=FALSE] #ensure some non-exposed NOTE
 
-  ## print?
+  ## print
   gmodels::CrossTable(TZ$exposed,TZ$died)
-  ## use person time to death by group to calculate death rate
+
+  ## now use person time to death by group to calculate death rate
 
   ## a) person time from 0
   TZ[,PTa:=pmin(t.d,t.l,Tstop)]
   NPT <- TZ[,.(deaths=sum(died),PT=sum(PTa)),by=exposed]
   NPT[,rate:=deaths/PT]
-  (RR2 <- NPT[exposed==TRUE]$rate / NPT[exposed==FALSE]$rate)
-  frac.d.control.a <- TZ[(floor(N/2)+1):N][died==TRUE,mean(!exposed)] #frac deaths in control (not xtra)
+  RR2 <- NPT[exposed==TRUE]$rate / NPT[exposed==FALSE]$rate
+  frac.d.control.a <- TZ[died == TRUE, mean(!exposed)] # frac deaths in control
 
   ## Suissa stats
   suissa.p <- TZ[exposed==TRUE,sum(t.e)/sum(PTa)] #Suissa p fraction of T1 that us U
@@ -58,22 +58,19 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   TZ[,PTb:=ifelse(exposed==TRUE,PTa-t.e,PTa)]
   NPT2 <- TZ[,.(deaths=sum(died),PT=sum(PTb)),by=exposed]
   NPT2[,rate:=deaths/PT]
-  (RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate)
-  frac.d.control.b <- TZ[(floor(N / 2) + 1):N][died == TRUE, mean(!exposed)]
+  RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate
+  frac.d.control.b <- TZ[died == TRUE, mean(!exposed)] # frac deaths in control
 
   ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
   TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
   cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
   TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark
   TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
-  M <- nrow(TZL)
-  TZL[1:floor(M/2),exposed:=FALSE] #ensure some non-exposed NOTE
   TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]
   NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTL[,rate:=deaths/PT]
-  (RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate)
-  TZLR <- TZ[(floor(N / 2) + 1):N][!(t.d < Tlandmark | t.l < Tlandmark)] # restrict 'true' CH  exposures
-  frac.d.control.c <- TZLR[died == TRUE, mean(!exposed)]
+  RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate
+  frac.d.control.c <- TZL[died == TRUE, mean(!exposed)] # frac deaths in control
 
   ## d) excluding early events & reset clock
   TZE <- TZ[!(t.d < Texc | t.l < Texc)]
@@ -81,9 +78,8 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   TZE[,PT:=pmin(t.d,t.l,Tstop)-Texc]            #NOTE resetting clock
   NPTE <- TZE[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
   NPTE[,rate:=deaths/PT]
-  (RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate)
-  TZER <- TZ[(floor(N / 2) + 1):N][!(t.d < Texc | t.l < Texc)] # restrict 'true' CH  exposures
-  frac.d.control.d <- TZER[died==TRUE,mean(!exposed)]
+  RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate
+  frac.d.control.d <- TZE[died == TRUE, mean(!exposed)] # frac deaths in control
 
   ## return
   if(!returnraw){
@@ -124,11 +120,11 @@ makeDistPlot <- function(input){
   ggplot2::ggplot() +
     ggplot2::xlim(0,input$T.max) +
     ggplot2::geom_function(ggplot2::aes(colour="exposure"),fun=dweibull,
-                           args=list(shape=input$k.e,scale=input$L.e)) +
+                           args=list(shape=input$k.e,scale=input$L.e),n=1e3) +
     ggplot2::geom_function(ggplot2::aes(colour="death"),fun=dweibull,
-                           args=list(shape=input$k.d,scale=input$L.d)) +
+                           args=list(shape=input$k.d,scale=input$L.d),n=1e3) +
     ggplot2::geom_function(ggplot2::aes(colour="LTFU"),fun=dweibull,
-                           args=list(shape=input$k.l,scale=input$L.l)) +
+                           args=list(shape=input$k.l,scale=input$L.l),n=1e3) +
     ggplot2::xlab('Time') + ggplot2::ylab('Hazard') +
     ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
 }
@@ -191,94 +187,22 @@ makeTMplot <- function(input){
 }
 
 
-
-## --- some smaller non-exported utilities ----
-
-## == now for death times:
-
-## ' Errors in cumulative mortality
-## '
-## ' This function is a utility for fitting a Weibull to the observed mortality in a control arm.
-## '
-## ' @title Residual for observed mortality at time T
-## ' @param T A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
-## ' @param km A proposed Weibull shape parameger
-## ' @param Lm A proposed Weibull scale parameter
-## ' @return The error as a difference
-## ' @author Pete Dodd
-CFRET <- function(T,km,Lm) 1-exp(-(T[1]/Lm)^km) - T[2] #first arg time, second corresponding mort'y
-
-## ' SSE mortality errors
-## '
-## ' This is a utility function for fitting a Weibull to observed mortality in a control arm..
-## '
-## ' @title SSE for fitting a Weibull to observed mortality
-## ' @param M A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
-## ' @param x A 2-vector equal to (log(Weibull shape), log(Weibull scale))
-## ' @return The SSE for the Weibull and these data
-## ' @author Pete Dodd
-morterr <- function(M,x){
-  x <- exp(x)
-  tmp <- apply(M,1,function(y) (CFRET(y,x[1],x[2]))^2) #vector of squared errors
-  sum(tmp)
-}
-
-
-##' For fitting to mortality data.
+##' Fit Weibull to times and fractions
 ##'
-##' This takes data from a control arm on cumulative mortality and fits a Weibull distribution to it so as to minimize the sum-of-squares error.
-##'
-##' @title Get the best-fit parameters for mortality
-##' @param M A 2xN matrix: the first column being observation times; the second column being fractional mortality at each time in the (control) cohort
-##' @return A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
+##' This uses an OLS fit to transformed Weibull parameters to fit. See Weibull distribution Wikipedia page for explanation.
+##' 
+##' @title Fit Weilbull
+##' @param t vector of time points
+##' @param F vector of fractions with event
+##' @return vector (k,L) of Weibull shape/scale parameters
 ##' @author Pete Dodd
 ##' @export
-getMortParz <- function(M){
-  out <- optim(par=c(0,0),fn=function(x)morterr(M,x))
-  ans <- list(k.d=exp(out$par[1]),L.d=exp(out$par[2]),converged=TRUE)
-  if(abs(out$convergence)>0) ans$converged <- FALSE
-  if(!ans$converged) warning('Mortality parameter fitting has not converged!')
-  ans
-}
-
-
-
-## == now for exposure times:
-
-## density for staying alive and being exposed at time x
-dns <- function(x,ke,le,km,lm) dweibull(x,shape=ke,scale=le) * exp(-(x/lm)^km)
-## normalization for the above
-norm <- function(T,ke,le,km,lm) integrate(function(x) dns(x,ke,le,km,lm),lower=0,upper=T)$value
-## pdf for exposure time conditional on receiving exposure
-normq <- function(T,ke,le,km,lm) norm(T,ke,le,km,lm)/norm(Inf,ke,le,km,lm)
-
-## error for treatment/exposure, as above
-experr <- function(M,x){
-  x <- exp(x)
-  tmp <- apply(M,1,function(y) (normq(y[1],x[1],x[2],x[3],x[4])-y[2])^2) #vector of squared errors
-  sum(tmp)
-}
-
-
-
-##' For fitting to treatment data.
-##'
-##' This takes data on cumulative percentiles of cumulative treatment among those treated, and fits a Weibull distribution to it so as to minimize the sum-of-squares error, taking into account the competing hazard of death.
-##'
-##' @title Get the best-fit parameters for treatment
-##' @param M A 2xN matrix: the first column being observation times; the second column being cumulative fraction treated at each time in the cohort of those who are ultimately treated
-##' @param km The best-fit Weibull shape parameter for mortality
-##' @param lm The best-fit Weibull scale parameter for mortality
-##' @return A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
-##' @author Pete Dodd
-##' @export
-getTxParz <- function(M,km,lm){
-  y <- log(c(km,lm))
-  out <- optim(par=c(0,0),fn=function(x) experr(M,c(x,y)))
-  ans <- list(k.e=exp(out$par[1]),L.e=exp(out$par[2]),converged=TRUE)
-  if(abs(out$convergence)>0) ans$converged <- FALSE
-  if(!ans$converged) warning('Treatment parameter fitting has not converged!')
-  ans
+Yfit <- function(t, F) {
+  Y <- log(-log(1 - F))
+  T <- log(t)
+  mdl <- lm(data = data.frame(T, Y), Y ~ .)
+  K <- unname(coef(mdl))
+  c(k = K[2], L = exp(-K[1] / K[2]))
 }
 
 
@@ -303,9 +227,9 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' This is a shortcut function to fit to mortality and treatment data and return results. This uses a cohort of 10,000 by default.
 ##' @title Make Results List
 ##' @param mortality.times a vector of mortality data times
-##' @param mortality.fracs a vector of mortality fractions corresponding to times
+##' @param mortality.fracs a vector of mortality fractions among all patients corresponding to times
 ##' @param treatment.times a vector of treatment data times
-##' @param treatment.fracs a vector of corresponding treatment fractions (denominator=those ultimately treated)
+##' @param treatment.fracs a vector of corresponding treatment fractions among all patients
 ##' @param N the number of deaths observed (for CIs)
 ##' @param simulation.cohort.size the size of the cohort used in the simulation
 ##' @param Tmax the maximum time horizon
@@ -322,12 +246,10 @@ makeResultList <- function(mortality.times, mortality.fracs,
                            Tmax = 30, Tlandmark = 1, Tearly = 1, ...) {
 
   ## mortality data and fit
-  mortality.data <- cbind(mortality.times, mortality.fracs)
-  mortality.parms <- getMortParz(mortality.data)
+  mortality.parms <- Yfit(mortality.times, mortality.fracs)
 
   ## treatment data and fit
-  treatment.data <- cbind(treatment.times, treatment.fracs)
-  treatment.parms <- getTxParz(treatment.data, mortality.parms$k.d, mortality.parms$L.d)
+  treatment.parms <- Yfit(treatment.times, treatment.fracs)
 
   ## combine
   input <- c(mortality.parms, treatment.parms)
@@ -339,7 +261,7 @@ makeResultList <- function(mortality.times, mortality.fracs,
     Tstop = Tmax, Tlandmark = Tlandmark, Texc = Tearly,
     rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
     rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
-    rtt.ltfu = function(n) rweibull(n, 1, 36500)
+    rtt.ltfu = function(n) rweibull(n, 1, 36500),...
   )
   ans$N <- N # add in total observed deaths
 

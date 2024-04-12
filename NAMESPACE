@@ -2,8 +2,7 @@
 
 export(CIfactor)
 export(ITBstats)
-export(getMortParz)
-export(getTxParz)
+export(Yfit)
 export(makeCItable)
 export(makeDistPlot)
 export(makeEffectBySamplePlot)
