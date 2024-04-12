@@ -235,6 +235,7 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' @param Tmax the maximum time horizon
 ##' @param Tlandmark the time used in landmark analysis
 ##' @param Tearly the time used in the drop-early-events & time analysis
+##' @param plotfit Plot the Weibull fits?
 ##' @param ... any extras
 ##' @param frac.deaths.control the fraction of deaths that are expected in the control arm (returned by ITBstats)
 ##' @return A list of results from ITBstats together with the number of deaths
@@ -243,7 +244,9 @@ CIfactor <- function(N, frac.deaths.control) {
 makeResultList <- function(mortality.times, mortality.fracs,
                            treatment.times, treatment.fracs,
                            N,simulation.cohort.size=1e5,
-                           Tmax = 30, Tlandmark = 1, Tearly = 1, ...) {
+                           Tmax = 30, Tlandmark = 1, Tearly = 1,
+                           plotfit=FALSE,
+                           ...) {
 
   ## mortality data and fit
   mortality.parms <- Yfit(mortality.times, mortality.fracs)
@@ -252,8 +255,22 @@ makeResultList <- function(mortality.times, mortality.fracs,
   treatment.parms <- Yfit(treatment.times, treatment.fracs)
 
   ## combine
-  input <- c(mortality.parms, treatment.parms)
+  input <- list(k.d=mortality.parms[1], L.d=mortality.parms[2],
+             k.e=treatment.parms[1], L.e=treatment.parms[2])
   input$T.max <- Tmax
+
+  if(plotfit){
+    tz <- seq(from=0,to=Tmax,by=0.1)
+    plot(mortality.times, mortality.fracs,type='b',xlim=c(0,Tmax),ylim=c(0,1),
+         xlab='Time',ylab='Fraction')
+    lines(tz,1-exp(-(tz/input$L.d)^input$k.d))
+    lines(treatment.times, treatment.fracs, type = "b",col=2)
+    lines(tz, 1 - exp(-(tz / input$L.e)^input$k.e),col=2)
+    legend(1, 0.9,
+      legend = c("death", "treatment"),
+      col = c("black","red"),lty=1,pch=1
+    )
+  }
 
   # run cohort
   ans <- ITBstats(

@@ -14,6 +14,7 @@ makeResultList(
   Tmax = 30,
   Tlandmark = 1,
   Tearly = 1,
+  plotfit = FALSE,
   ...
 )
 }
@@ -35,6 +36,8 @@ makeResultList(
 \item{Tlandmark}{the time used in landmark analysis}
 
 \item{Tearly}{the time used in the drop-early-events & time analysis}
+
+\item{plotfit}{Plot the Weibull fits?}
 
 \item{...}{any extras}
 
