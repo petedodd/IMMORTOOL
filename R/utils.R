@@ -266,7 +266,7 @@ makeResultList <- function(mortality.times, mortality.fracs,
     lines(tz,1-exp(-(tz/input$L.d)^input$k.d))
     lines(treatment.times, treatment.fracs, type = "b",col=2)
     lines(tz, 1 - exp(-(tz / input$L.e)^input$k.e),col=2)
-    legend(1, 0.9,
+    legend('topleft',## 1, 0.9,
       legend = c("death", "treatment"),
       col = c("black","red"),lty=1,pch=1
     )
