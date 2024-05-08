@@ -15,6 +15,7 @@ makeResultList(
   Tlandmark = 1,
   Tearly = 1,
   plotfit = FALSE,
+  denominator = "cohort",
   ...
 )
 }
@@ -38,6 +39,8 @@ makeResultList(
 \item{Tearly}{the time used in the drop-early-events & time analysis}
 
 \item{plotfit}{Plot the Weibull fits?}
+
+\item{denominator}{Whether fractions have the whole cohort as denominator (default: 'cohort') or only those ultimately 'exposed'}
 
 \item{...}{any extras}
 

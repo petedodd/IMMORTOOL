@@ -213,6 +213,7 @@ Yfit <- function(t, F) {
 ##' @title Get the best-fit parameters for treatment
 ##' @param M A 2xN matrix: the first column being observation times; the second column being cumulative fraction treated at each time in the cohort of those who are ultimately treated
 ##' @param mort.parms The best-fit Weibull shape and scale parameter for mortality as vector
+##' @param denominator Whether fractions have the whole cohort as denominator (default: 'cohort') or only those ultimately 'exposed'
 ##' @return A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
 ##' @author Pete Dodd
 ##' @export
@@ -227,9 +228,9 @@ getTxParz <- function(M,mort.parms,denominator='cohort'){
   ans
 }
 
-## density for staying alive and being exposed at time x
+## density for staying alive and being exposed at time x (competing hazards)
 dns <- function(x,ke,le,km,lm) dweibull(x,shape=ke,scale=le) * exp(-(x/lm)^km)
-## normalization for the above
+## normalization for the above: ie cumulative density
 norm <- function(T,ke,le,km,lm){
   if(ke<1 & T < le/200){ #safety: avoid numerical integration over blow-up
     1-exp(-(T/le)^ke) #non-competing version which is close
@@ -242,7 +243,8 @@ normq <- function(T,ke,le,km,lm) norm(T,ke,le,km,lm)/norm(Inf,ke,le,km,lm)
 ## error for treatment/exposure, as above
 experr <- function(M,x,denominator='cohort'){
   x <- exp(x)
-  if( !(denominator=='cohort' | denominator=='exposed') ) stop("denominator must either by 'cohort' or 'exposed'")
+  if( !(denominator=='cohort' | denominator=='exposed') )
+    stop("denominator must either by 'cohort' or 'exposed'")
   if(denominator=='cohort')
     tmp <- apply(M,1,function(y) (norm(y[1],x[1],x[2],x[3],x[4])-y[2])^2) #vector of squared errors
   if(denominator=='exposed')
@@ -282,6 +284,7 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' @param Tlandmark the time used in landmark analysis
 ##' @param Tearly the time used in the drop-early-events & time analysis
 ##' @param plotfit Plot the Weibull fits?
+##' @param denominator Whether fractions have the whole cohort as denominator (default: 'cohort') or only those ultimately 'exposed'
 ##' @param ... any extras
 ##' @param frac.deaths.control the fraction of deaths that are expected in the control arm (returned by ITBstats)
 ##' @return A list of results from ITBstats together with the number of deaths
@@ -291,7 +294,7 @@ makeResultList <- function(mortality.times, mortality.fracs,
                            treatment.times, treatment.fracs,
                            N,simulation.cohort.size=1e5,
                            Tmax = 30, Tlandmark = 1, Tearly = 1,
-                           plotfit=FALSE,
+                           plotfit=FALSE,denominator='cohort',
                            ...) {
 
   ## mortality data and fit
@@ -299,22 +302,29 @@ makeResultList <- function(mortality.times, mortality.fracs,
 
   ## treatment data and fit
   treatment.data <- cbind(treatment.times, treatment.fracs)
-  treatment.parms <- getTxParz(treatment.data, mortality.parms)
+  treatment.parms <- getTxParz(treatment.data, mortality.parms, denominator=denominator)
 
   ## combine
   input <- list(k.d=mortality.parms[1], L.d=mortality.parms[2],
              k.e=treatment.parms$k.e, L.e=treatment.parms$L.e)
   input$T.max <- Tmax
 
-  if(plotfit){ #TODO this needs changing to have competition & conditioning
+  if(plotfit){
     tz <- seq(from=0,to=Tmax,by=0.1)
+    ttl <- ifelse(denominator=='cohort',
+                  'Treatment denominator = whole cohort',
+                  'Treatment denominator = those ultimately treated')
     plot(mortality.times, mortality.fracs,
          type='b',xlim=c(0,Tmax),ylim=c(0,1),
-         xlab='Time',ylab='Fraction',main='Treatment denominator = whole cohort')
+         xlab='Time',ylab='Fraction',main=ttl)
     lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2)
     lines(treatment.times, treatment.fracs, type = "b",col=2)
     CE <- tz #cumulative exposure
-    for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+    if(denominator=='cohort'){
+      for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+    } else{
+      for(i in 1:length(CE)) CE[i] <- normq(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+    }
     ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
     lines(tz, CE,col=2,lty=2)
     legend('topleft',## 1, 0.9,

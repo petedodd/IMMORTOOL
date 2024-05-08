@@ -4,12 +4,14 @@
 \alias{getTxParz}
 \title{Get the best-fit parameters for treatment}
 \usage{
-getTxParz(M, mort.parms)
+getTxParz(M, mort.parms, denominator = "cohort")
 }
 \arguments{
 \item{M}{A 2xN matrix: the first column being observation times; the second column being cumulative fraction treated at each time in the cohort of those who are ultimately treated}
 
 \item{mort.parms}{The best-fit Weibull shape and scale parameter for mortality as vector}
+
+\item{denominator}{Whether fractions have the whole cohort as denominator (default: 'cohort') or only those ultimately 'exposed'}
 }
 \value{
 A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
