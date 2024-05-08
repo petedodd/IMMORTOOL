@@ -3,6 +3,7 @@
 export(CIfactor)
 export(ITBstats)
 export(Yfit)
+export(getTxParz)
 export(makeCItable)
 export(makeDistPlot)
 export(makeEffectBySamplePlot)
