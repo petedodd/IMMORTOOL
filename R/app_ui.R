@@ -13,64 +13,7 @@ app_ui <- function(request) {
       h1("IMMORTOOL:"),
       h2("Exploring the potential for immortal time bias"),
 
-      ## Sidebar layout with input and output definitions ----
-      sidebarLayout(
-
-        ## Sidebar panel for inputs ----
-        sidebarPanel(
-
-          ## Input: Slider for End time ----
-          sliderInput(inputId = "T.max",
-                      label = "Follow-up time:",
-                      min = 1,
-                      max = 100,
-                      value = 90),
-
-          ## Input: Slider for exposure ----
-          sliderInput(inputId = "L.e",
-                      label = "Exposure scale parameter:",
-                      min = 0.001,
-                      max = 500,
-                      value = 10.6),
-          sliderInput(inputId = "k.e",
-                      label = "Exposure shape parameter:",
-                      min = -1,
-                      max = 20,
-                      value = 2.3),
-
-          ## Input: Slider for death ----
-          sliderInput(inputId = "L.d",
-                      label = "Death scale parameter:",
-                      min = 0.001,
-                      max = 500,
-                      value = 428),
-          sliderInput(inputId = "k.d",
-                      label = "Death shape parameter:",
-                      min = -1,
-                      max = 20,
-                      value = 0.5),
-
-          ## Input: Time for landmark analysis ---
-          sliderInput(inputId = "T.landmark",
-                      label = "Time for landmark analysis:",
-                      min = 1,
-                      max = 100,
-                      value = 3)
-
-          ## ## Input: Slider for death ----
-          ## sliderInput(inputId = "L.l",
-          ##             label = "LTFU scale parameter:",
-          ##             min = 2,
-          ##             max = 1000,
-          ##             value = 5),
-          ## sliderInput(inputId = "k.l",
-          ##             label = "LTFU shape parameter:",
-          ##             min = -1,
-          ##             max = 20,
-          ##             value = 1)
-        ),
-
-        ## Main panel for displaying outputs ----
+      ## Main panel for displaying outputs ----
         mainPanel(
           tabsetPanel(type = "tabs",
                       tabPanel(
@@ -98,6 +41,7 @@ app_ui <- function(request) {
                       tabPanel("Fitting distributions",
                                value="S1",
                                h2("Adjust how many data points there are for mortality/treatment, then press button to fit."),
+                               h3("Is the denominator for the treatment data the whole cohort or those ultimately exposed?"),
                                h3("Times and fractions should increase (mortality is cumulative)."),
                                fluidRow(
                                  column(width=6,
@@ -106,6 +50,9 @@ app_ui <- function(request) {
                                         uiOutput("morttimeinput"),
                                         uiOutput("mortfracinput")),
                                  column(width=6,
+                                        radioButtons("denominator", "Denominator type:",
+                                                     c("Whole cohort" = "cohort",
+                                                       "Only those ultimately treated" = "exposed")),
                                         numericInput("TTEnum", "Number of treatment time data points",
                                                      value = 1, min = 1, max = 5),
                                         uiOutput("TTEtimeinput"),
@@ -116,8 +63,8 @@ app_ui <- function(request) {
                                ),
                       ## tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),
                       tabPanel("Time-to-event distributions", plotOutput(outputId = "TMPlot")),
-                      tabPanel("Distribution stats", tableOutput('dists')),
-                      tabPanel("Output Plot", plotOutput(outputId = "resultPlot"))#,
+                      tabPanel("Distribution stats", tableOutput('dists'))## ,
+                      ## tabPanel("Output Plot", plotOutput(outputId = "resultPlot"))#,
                       ## tabPanel("Rates, method a", tableOutput('tableA1')),
                       ## tabPanel("Rate ratio, method a", tableOutput('tableA2')),
                       ## tabPanel("Rates, method b", tableOutput('tableB1')),
@@ -125,7 +72,64 @@ app_ui <- function(request) {
                       )
         )
       )
-    )
+
+   ##    ## Sidebar layout with input and output definitions ----
+   ##    sidebarLayout(
+
+   ##      ## Sidebar panel for inputs ----
+   ##      ## sidebarPanel(
+
+   ##      ##   ## Input: Slider for End time ----
+   ##      ##   sliderInput(inputId = "T.max",
+   ##      ##               label = "Follow-up time:",
+   ##      ##               min = 1,
+   ##      ##               max = 100,
+   ##      ##               value = 90),
+
+   ##      ##   ## Input: Slider for exposure ----
+   ##      ##   sliderInput(inputId = "L.e",
+   ##      ##               label = "Exposure scale parameter:",
+   ##      ##               min = 0.001,
+   ##      ##               max = 500,
+   ##      ##               value = 10.6),
+   ##      ##   sliderInput(inputId = "k.e",
+   ##      ##               label = "Exposure shape parameter:",
+   ##      ##               min = -1,
+   ##      ##               max = 20,
+   ##      ##               value = 2.3),
+
+   ##      ##   ## Input: Slider for death ----
+   ##      ##   sliderInput(inputId = "L.d",
+   ##      ##               label = "Death scale parameter:",
+   ##      ##               min = 0.001,
+   ##      ##               max = 500,
+   ##      ##               value = 428),
+   ##      ##   sliderInput(inputId = "k.d",
+   ##      ##               label = "Death shape parameter:",
+   ##      ##               min = -1,
+   ##      ##               max = 20,
+   ##      ##               value = 0.5),
+
+   ##      ##   ## Input: Time for landmark analysis ---
+   ##      ##   sliderInput(inputId = "T.landmark",
+   ##      ##               label = "Time for landmark analysis:",
+   ##      ##               min = 1,
+   ##      ##               max = 100,
+   ##      ##               value = 3)
+
+   ##      ##   ## ## Input: Slider for death ----
+   ##      ##   ## sliderInput(inputId = "L.l",
+   ##      ##   ##             label = "LTFU scale parameter:",
+   ##      ##   ##             min = 2,
+   ##      ##   ##             max = 1000,
+   ##      ##   ##             value = 5),
+   ##      ##   ## sliderInput(inputId = "k.l",
+   ##      ##   ##             label = "LTFU shape parameter:",
+   ##      ##   ##             min = -1,
+   ##      ##   ##             max = 20,
+   ##      ##   ##             value = 1)
+   ##      ## ),
+
   )
 }
 
