@@ -198,23 +198,47 @@ makeTMplot <- function(input){
 ##' @author Pete Dodd
 ##' @export
 makeFitCheckPlot <- function(input){
+  v <- c(input$mortnum,input$TTEnum)
+  ## remake input data
+  mt <- mf <- list()
+  for(i in 1:input$mortnum){
+    mt[[i]] <- input[[paste0('morttime',i)]]
+    mf[[i]] <- input[[paste0('mortfrac',i)]]
+  }
+  mt <- unlist(mt)
+  mf <- unlist(mf)
+  mortality.times <- mt
+  mortality.fracs <- mf
+  tt <- tf <- list()
+  for(i in 1:input$TTEnum){
+    tt[[i]] <- input[[paste0('TTEtime',i)]]
+    tf[[i]] <- input[[paste0('TTEfrac',i)]]
+  }
+  tt <- unlist(tt)
+  tf <- unlist(tf)
+  treatment.times <- tt
+  treatment.fracs <- tf
+  ## TODO inject fit results to input; ideally the above too
+
+  ## plotting
   tz <- seq(from=0,to=input$Tmax,by=0.1)
   ttl <- ifelse(input$denominator=='cohort',
                 'Treatment denominator = whole cohort',
                 'Treatment denominator = those ultimately treated')
-  plot(input$mortality.times, input$mortality.fracs,
+  plot(mortality.times, mortality.fracs,
        type='b',xlim=c(0,input$Tmax),ylim=c(0,1),
        xlab='Time',ylab='Fraction',main=ttl)
-  lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2)
-  lines(input$treatment.times, input$treatment.fracs, type = "b",col=2)
-  CE <- tz #cumulative exposure
-  if(input$denominator=='cohort'){
-    for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
-  } else{
-    for(i in 1:length(CE)) CE[i] <- normq(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
-  }
-  ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
-  lines(tz, CE,col=2,lty=2)
+  ## lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2)
+  lines(treatment.times, treatment.fracs, type = "b",col=2)
+  ## CE <- tz #cumulative exposure
+  ## if(input$denominator=='cohort'){
+  ##   for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+  ## } else{
+  ##   for(i in 1:length(CE)) CE[i] <- normq(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+  ## }
+  ## ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
+  ## lines(tz, CE,col=2,lty=2)
+  
   legend('topleft',## 1, 0.9,
          legend = c("death", "treatment"),
          col = c("black","red"),lty=1,pch=1

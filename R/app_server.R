@@ -64,7 +64,6 @@ app_server <- function(input, output, session) {
     if(!all(mf==cummax(mf))) stop('Mortality fractions do not increase!')
     ## D <- getMortParz(MD) #fit TODO old version
     D <- Yfit(mt, mf) #mortality.parms TODO denominator button
-
     ## then treatment fit
     if(!any(!is.finite(D))){
       tt <- tf <- list()
