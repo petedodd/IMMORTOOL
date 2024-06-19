@@ -54,7 +54,7 @@ app_ui <- function(request) {
                                                      c("Whole cohort" = "cohort",
                                                        "Only those ultimately treated" = "exposed")),
                                         numericInput("TTEnum", "Number of treatment time data points",
-                                                     value = 1, min = 1, max = 5),
+                                                     value = 2, min = 1, max = 5),
                                         uiOutput("TTEtimeinput"),
                                         uiOutput("TTEfracinput"))
                                ),
@@ -62,7 +62,8 @@ app_ui <- function(request) {
                                textOutput('fits')
                                ),
                       ## tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),
-                      tabPanel("Time-to-event distributions", plotOutput(outputId = "TMPlot")),
+                      tabPanel("Time-to-event distributions", plotOutput(outputId = "FitPlot")),
+                      ## tabPanel("Time-to-event distributions", plotOutput(outputId = "TMPlot")),
                       tabPanel("Distribution stats", tableOutput('dists'))## ,
                       ## tabPanel("Output Plot", plotOutput(outputId = "resultPlot"))#,
                       ## tabPanel("Rates, method a", tableOutput('tableA1')),

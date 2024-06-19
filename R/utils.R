@@ -187,6 +187,40 @@ makeTMplot <- function(input){
 }
 
 
+
+##' Plot survival and treatment distributions.
+##'
+##' This is a utility to check fitted survival distributions against data for plausibility.
+##' 
+##' @title makeFitCheckPlot
+##' @param input a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d), and the maximum time (T.max), denominator type, and the mortality and treatment data.
+##' @return A plot
+##' @author Pete Dodd
+##' @export
+makeFitCheckPlot <- function(input){
+  tz <- seq(from=0,to=input$Tmax,by=0.1)
+  ttl <- ifelse(input$denominator=='cohort',
+                'Treatment denominator = whole cohort',
+                'Treatment denominator = those ultimately treated')
+  plot(input$mortality.times, input$mortality.fracs,
+       type='b',xlim=c(0,input$Tmax),ylim=c(0,1),
+       xlab='Time',ylab='Fraction',main=ttl)
+  lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2)
+  lines(input$treatment.times, input$treatment.fracs, type = "b",col=2)
+  CE <- tz #cumulative exposure
+  if(input$denominator=='cohort'){
+    for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+  } else{
+    for(i in 1:length(CE)) CE[i] <- normq(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+  }
+  ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
+  lines(tz, CE,col=2,lty=2)
+  legend('topleft',## 1, 0.9,
+         legend = c("death", "treatment"),
+         col = c("black","red"),lty=1,pch=1
+         )
+}
+
 ##' Fit Weibull to times and fractions
 ##'
 ##' This uses an OLS fit to transformed Weibull parameters to fit. See Weibull distribution Wikipedia page for explanation.

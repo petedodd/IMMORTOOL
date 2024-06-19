@@ -21,14 +21,14 @@ app_server <- function(input, output, session) {
     mortnum <- as.integer(input$mortnum)
     lapply(1:mortnum, function(i) {
       numericInput(inputId = paste0("morttime", i), label = paste("Time ", i),
-                   value=0, min = 0, max = 90) #TODO change max
+                   value=i, min = 0, max = 90) #TODO change max
     })
   })
   output$mortfracinput <- renderUI({
     mortnum <- as.integer(input$mortnum)
     lapply(1:mortnum, function(i) {
       numericInput(inputId = paste0("mortfrac", i), label = paste("Fraction dead ", i),
-                   value=0, min = 0, max = 1)
+                   value=i/10, min = 0, max = 1)
     })
   })
 
@@ -37,18 +37,18 @@ app_server <- function(input, output, session) {
     TTEnum <- as.integer(input$TTEnum)
     lapply(1:TTEnum, function(i) {
       numericInput(inputId = paste0("TTEtime", i), label = paste("Time ", i),
-                   value=0, min = 0, max = 90) #TODO change max
+                   value=i, min = 0, max = 90) #TODO change max
     })
   })
   output$TTEfracinput <- renderUI({
     TTEnum <- as.integer(input$TTEnum)
     lapply(1:TTEnum, function(i) {
       numericInput(inputId = paste0("TTEfrac", i), label = paste("Time-to-treatment quantile ", i),
-                   value=0, min = 0, max = 1)
+                   value=i/10, min = 0, max = 1)
     })
   })
 
-  ## fit action
+  ## fit action TODO
   fitVals <- eventReactive(input$do, {
     ## mortality fit first
     mt <- mf <- list()
@@ -62,10 +62,11 @@ app_server <- function(input, output, session) {
     if(any(!MD>0)) stop('Mortality data not >0!')
     if(!all(mt==cummax(mt))) stop('Mortality times do not increase!')
     if(!all(mf==cummax(mf))) stop('Mortality fractions do not increase!')
-    D <- getMortParz(MD) #fit
+    ## D <- getMortParz(MD) #fit TODO old version
+    D <- Yfit(mt, mf) #mortality.parms TODO denominator button
 
     ## then treatment fit
-    if(D$converged){
+    if(!any(!is.finite(D))){
       tt <- tf <- list()
       for(i in 1:input$TTEnum){
         tt[[i]] <- input[[paste0('TTEtime',i)]]
@@ -77,17 +78,19 @@ app_server <- function(input, output, session) {
       if(any(!TD>0)) stop('TTE data not >0!')
       if(!all(tt==cummax(tt))) stop('Treatment times do not increase!')
       if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
-      T <- getTxParz(TD,D$k.d,D$L.d)
+      ## T <- getTxParz(TD,D$k.d,D$L.d) #old version TODO denominator type
+      T <- getTxParz(TD,D)
     }
 
-    if(!D$converged){
-      txt <- 'Unfortunately, the mortality fit did not converge!'
-    } else if(!T$converged){
+    ## if(!D$converged){
+    ##   txt <- 'Unfortunately, the mortality fit did not converge!'
+    ## } else 
+    if(!T$converged){
       txt <- 'Unfortunately, while the mortality converged, the treatment fit did not converge!'
     } else {
       ## output
       txt <- paste0('Suggested parameters based on this are:\n Mortality (shape,scale)=(',
-                    D$k.d,' , ',D$L.d,' )\n Treatment (shape,scale)=(',
+                    D['k'],' , ',D['L'],' )\n Treatment (shape,scale)=(',
                     T$k.e,' , ',T$L.e,' )\n')
       }
     txt
@@ -105,6 +108,10 @@ app_server <- function(input, output, session) {
 
   output$TMPlot <- renderPlot({
     makeTMplot(input)
+  })
+
+  output$FitPlot <- renderPlot({
+    makeFitCheckPlot(input)
   })
 
   output$resultPlot <- renderPlot({
