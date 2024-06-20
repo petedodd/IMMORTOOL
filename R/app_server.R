@@ -78,6 +78,7 @@ app_server <- function(input, output, session) {
 
   ## fit action TODO
   fitVals <- eventReactive(input$do, {
+  ## fitVals <- reactive({
     FT <- fractimes()
     mt <- FT$mt; mf <- FT$mf
     tt <- FT$tt; tf <- FT$tf
@@ -96,19 +97,25 @@ app_server <- function(input, output, session) {
                     D['k'],' , ',D['L'],' )\n Treatment (shape,scale)=(',
                     T$k.e,' , ',T$L.e,' )\n')
     }
-    txt
+    list(txt = txt,
+         k.m = D['k'],
+         L.m = D['L'],
+         k.e = ifelse(!T$converged,NULL,T$k.e),
+         L.e = ifelse(!T$converged,NULL,T$L.e)
+         )
   })
 
+  ## text to report results
   output$fits <- renderText({
-    fitVals()
+    FV <- fitVals()
+    FV$txt
   })
 
 
   ## ---- other stuff -------
-
+  ## TODO fitVals doesn't update?
   output$FitPlot <- renderPlot({
-    ## print(v)
-    makeFitCheckPlot(input)
+    makeFitCheckPlot(input,fractimes(),fitVals())
   })
 
   output$dists <- renderTable({

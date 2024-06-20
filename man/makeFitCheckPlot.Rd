@@ -4,7 +4,7 @@
 \alias{makeFitCheckPlot}
 \title{makeFitCheckPlot}
 \usage{
-makeFitCheckPlot(input)
+makeFitCheckPlot(input, FT, FV)
 }
 \arguments{
 \item{input}{a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d), and the maximum time (T.max), denominator type, and the mortality and treatment data.}

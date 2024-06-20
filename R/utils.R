@@ -197,28 +197,14 @@ makeTMplot <- function(input){
 ##' @return A plot
 ##' @author Pete Dodd
 ##' @export
-makeFitCheckPlot <- function(input){
-  ## v <- c(input$mortnum,input$TTEnum)
-  ## remake input data
-  mt <- mf <- list()
-  for(i in 1:input$mortnum){
-    mt[[i]] <- input[[paste0('morttime',i)]]
-    mf[[i]] <- input[[paste0('mortfrac',i)]]
-  }
-  mt <- unlist(mt)
-  mf <- unlist(mf)
-  mortality.times <- mt
-  mortality.fracs <- mf
-  tt <- tf <- list()
-  for(i in 1:input$TTEnum){
-    tt[[i]] <- input[[paste0('TTEtime',i)]]
-    tf[[i]] <- input[[paste0('TTEfrac',i)]]
-  }
-  tt <- unlist(tt)
-  tf <- unlist(tf)
-  treatment.times <- tt
-  treatment.fracs <- tf
-  ## TODO inject fit results to input; ideally the above too
+makeFitCheckPlot <- function(input,FT,FV){
+  ## once resolved fix documentation above TODO
+  treatment.times <- FT$tt
+  treatment.fracs <- FT$tf
+  mortality.times <- FT$mt
+  mortality.fracs <- FT$mf
+  L.d <- FV$L.d
+  k.d <- FV$k.d
 
   ## plotting
   tz <- seq(from=0,to=input$Tmax,by=0.1)
@@ -228,7 +214,7 @@ makeFitCheckPlot <- function(input){
   plot(mortality.times, mortality.fracs,
        type='b',xlim=c(0,input$Tmax),ylim=c(0,1),
        xlab='Time',ylab='Fraction',main=ttl)
-  ## lines(tz,1-exp(-(tz/v$L.d)^v$k.d),lty=2) #TODO
+  ## lines(tz,1-exp(-(tz/L.d)^k.d),lty=2)
   ## lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2) #TODO
   lines(treatment.times, treatment.fracs, type = "b",col=2)
   ## CE <- tz #cumulative exposure
