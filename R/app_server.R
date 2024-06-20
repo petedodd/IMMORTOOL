@@ -48,8 +48,8 @@ app_server <- function(input, output, session) {
     })
   })
 
-  ## fit action TODO
-  fitVals <- eventReactive(input$do, {
+  ## capture the mortality/treatment times & fracs
+  fractimes <- reactive({
     ## mortality fit first
     mt <- mf <- list()
     for(i in 1:input$mortnum){
@@ -58,32 +58,36 @@ app_server <- function(input, output, session) {
     }
     mt <- unlist(mt)
     mf <- unlist(mf)
-    MD <- cbind(mt,mf)
-    if(any(!MD>0)) stop('Mortality data not >0!')
+    if(any(!c(mt,mf)>0)) stop('Mortality data not >0!')
     if(!all(mt==cummax(mt))) stop('Mortality times do not increase!')
     if(!all(mf==cummax(mf))) stop('Mortality fractions do not increase!')
-    ## D <- getMortParz(MD) #fit TODO old version
-    D <- Yfit(mt, mf) #mortality.parms TODO denominator button
+    ## treatment
+    tt <- tf <- list()
+    for(i in 1:input$TTEnum){
+      tt[[i]] <- input[[paste0('TTEtime',i)]]
+      tf[[i]] <- input[[paste0('TTEfrac',i)]]
+    }
+    tt <- unlist(tt)
+    tf <- unlist(tf)
+    if(any(!c(tt,tf)>0)) stop('Mortality data not >0!')
+    if(!all(tt==cummax(tt))) stop('Treatment times do not increase!')
+    if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
+    list(mt=mt,mf=mf,tt=tt,tf=tf)
+  })
+
+
+  ## fit action TODO
+  fitVals <- eventReactive(input$do, {
+    FT <- fractimes()
+    mt <- FT$mt; mf <- FT$mf
+    tt <- FT$tt; tf <- FT$tf
+    ## mortality fit
+    D <- Yfit(mt, mf)
     ## then treatment fit
     if(!any(!is.finite(D))){
-      tt <- tf <- list()
-      for(i in 1:input$TTEnum){
-        tt[[i]] <- input[[paste0('TTEtime',i)]]
-        tf[[i]] <- input[[paste0('TTEfrac',i)]]
-      }
-      tt <- unlist(tt)
-      tf <- unlist(tf)
       TD <- cbind(tt,tf)
-      if(any(!TD>0)) stop('TTE data not >0!')
-      if(!all(tt==cummax(tt))) stop('Treatment times do not increase!')
-      if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
-      ## T <- getTxParz(TD,D$k.d,D$L.d) #old version TODO denominator type
       T <- getTxParz(TD,D)
     }
-
-    ## if(!D$converged){
-    ##   txt <- 'Unfortunately, the mortality fit did not converge!'
-    ## } else 
     if(!T$converged){
       txt <- 'Unfortunately, while the mortality converged, the treatment fit did not converge!'
     } else {
@@ -91,7 +95,7 @@ app_server <- function(input, output, session) {
       txt <- paste0('Suggested parameters based on this are:\n Mortality (shape,scale)=(',
                     D['k'],' , ',D['L'],' )\n Treatment (shape,scale)=(',
                     T$k.e,' , ',T$L.e,' )\n')
-      }
+    }
     txt
   })
 
@@ -101,39 +105,12 @@ app_server <- function(input, output, session) {
 
 
   ## ---- other stuff -------
-  output$distPlot <- renderPlot({
-    makeDistPlot(input)
-  })
-
-  output$TMPlot <- renderPlot({
-    makeTMplot(input)
-  })
 
   output$FitPlot <- renderPlot({
+    ## print(v)
     makeFitCheckPlot(input)
   })
 
-  output$resultPlot <- renderPlot({
-    ANS <- ITBoutput()
-    makeEffectBySamplePlot(ANS)
-  })
-
-  output$tableA1 <- renderTable({
-    ANS <- ITBoutput()
-    ANS$table.a
-  })
-  output$tableA2 <- renderTable({
-    ANS <- ITBoutput()
-    data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.a)
-  })
-  output$tableB1 <- renderTable({
-    ANS <- ITBoutput()
-    ANS$table.b
-  })
-  output$tableB2 <- renderTable({
-    ANS <- ITBoutput()
-    data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.b)
-  })
   output$dists <- renderTable({
     k <- 2
     L.l <- 36500
@@ -147,5 +124,99 @@ app_server <- function(input, output, session) {
                `97.5% percentile`=qweibull(0.975,shape=2,scale=c(input$L.e,input$L.d,36500))
                )
   })
+  
+  ## output$distPlot <- renderPlot({
+  ##   makeDistPlot(input)
+  ## })
+
+  ## output$TMPlot <- renderPlot({
+  ##   makeTMplot(input)
+  ## })
+
+  
+  ## ## new approach designed to allow persistence of data between tabs:
+  ## v <- reactiveValues(data=NULL) 
+ 
+  ## ## fit action TODO
+  ## observeEvent(input$do, {
+  ##   ## mortality fit first
+  ##   mt <- mf <- list()
+  ##   for(i in 1:input$mortnum){
+  ##     mt[[i]] <- input[[paste0('morttime',i)]]
+  ##     mf[[i]] <- input[[paste0('mortfrac',i)]]
+  ##   }
+  ##   mt <- unlist(mt)
+  ##   mf <- unlist(mf)
+  ##   MD <- cbind(mt,mf)
+  ##   if(any(!MD>0)) stop('Mortality data not >0!')
+  ##   if(!all(mt==cummax(mt))) stop('Mortality times do not increase!')
+  ##   if(!all(mf==cummax(mf))) stop('Mortality fractions do not increase!')
+  ##   ## D <- getMortParz(MD) #fit TODO old version
+  ##   D <- Yfit(mt, mf) #mortality.parms TODO denominator button
+  ##   ## then treatment fit
+  ##   if(!any(!is.finite(D))){
+  ##     tt <- tf <- list()
+  ##     for(i in 1:input$TTEnum){
+  ##       tt[[i]] <- input[[paste0('TTEtime',i)]]
+  ##       tf[[i]] <- input[[paste0('TTEfrac',i)]]
+  ##     }
+  ##     tt <- unlist(tt)
+  ##     tf <- unlist(tf)
+  ##     TD <- cbind(tt,tf)
+  ##     if(any(!TD>0)) stop('TTE data not >0!')
+  ##     if(!all(tt==cummax(tt))) stop('Treatment times do not increase!')
+  ##     if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
+  ##     ## T <- getTxParz(TD,D$k.d,D$L.d) #old version TODO denominator type
+  ##     T <- getTxParz(TD,D)
+  ##   }
+  ##   ## if(!D$converged){
+  ##   ##   txt <- 'Unfortunately, the mortality fit did not converge!'
+  ##   ## } else 
+  ##   if(!T$converged){
+  ##     txt <- 'Unfortunately, while the mortality converged, the treatment fit did not converge!'
+  ##   } else {
+  ##     ## output
+  ##     txt <- paste0('Suggested parameters based on this are:\n Mortality (shape,scale)=(',
+  ##                   D['k'],' , ',D['L'],' )\n Treatment (shape,scale)=(',
+  ##                   T$k.e,' , ',T$L.e,' )\n')
+  ##   }
+  ##   ## capture outputs
+  ##   v$k.e <- T$k.e; v$L.e <- T$L.e
+  ##   v$k.d <- D['k']; v$L.d <- D['L']
+  ##   v$txt <- txt
+  ## })
+
+  ## output$fits <- renderText({
+  ##   if(is.null(v$txt)) return()
+  ##   v$txt
+  ## })
+
+  ## output$FitPlot <- renderPlot({
+  ##   if(is.null(v$txt)) return()
+  ##   makeFitCheckPlot(input)
+  ## })
+
+  ## output$resultPlot <- renderPlot({
+  ##   ANS <- ITBoutput()
+  ##   makeEffectBySamplePlot(ANS)
+  ## })
+
+  ## output$tableA1 <- renderTable({
+  ##   ANS <- ITBoutput()
+  ##   ANS$table.a
+  ## })
+  ## output$tableA2 <- renderTable({
+  ##   ANS <- ITBoutput()
+  ##   data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.a)
+  ## })
+  ## output$tableB1 <- renderTable({
+  ##   ANS <- ITBoutput()
+  ##   ANS$table.b
+  ## })
+  ## output$tableB2 <- renderTable({
+  ##   ANS <- ITBoutput()
+  ##   data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.b)
+  ## })
+
 
 }

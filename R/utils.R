@@ -198,7 +198,7 @@ makeTMplot <- function(input){
 ##' @author Pete Dodd
 ##' @export
 makeFitCheckPlot <- function(input){
-  v <- c(input$mortnum,input$TTEnum)
+  ## v <- c(input$mortnum,input$TTEnum)
   ## remake input data
   mt <- mf <- list()
   for(i in 1:input$mortnum){
@@ -228,7 +228,8 @@ makeFitCheckPlot <- function(input){
   plot(mortality.times, mortality.fracs,
        type='b',xlim=c(0,input$Tmax),ylim=c(0,1),
        xlab='Time',ylab='Fraction',main=ttl)
-  ## lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2)
+  ## lines(tz,1-exp(-(tz/v$L.d)^v$k.d),lty=2) #TODO
+  ## lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2) #TODO
   lines(treatment.times, treatment.fracs, type = "b",col=2)
   ## CE <- tz #cumulative exposure
   ## if(input$denominator=='cohort'){

@@ -64,10 +64,11 @@ app_ui <- function(request) {
                                actionButton("do", "Try to fit!"),
                                textOutput('fits')
                                ),
-                      ## tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),
                       tabPanel("Time-to-event distributions", plotOutput(outputId = "FitPlot")),
+                      tabPanel("Distribution stats", tableOutput('dists'))
+                      ## ,
                       ## tabPanel("Time-to-event distributions", plotOutput(outputId = "TMPlot")),
-                      tabPanel("Distribution stats", tableOutput('dists'))## ,
+                      ## tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),
                       ## tabPanel("Output Plot", plotOutput(outputId = "resultPlot"))#,
                       ## tabPanel("Rates, method a", tableOutput('tableA1')),
                       ## tabPanel("Rate ratio, method a", tableOutput('tableA2')),
