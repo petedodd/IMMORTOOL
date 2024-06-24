@@ -1,6 +1,6 @@
 #' The application server-side
 #'
-#' @param input,output,session Internal parameters for {shiny}.
+#' @param input,output,session Internal parameters or {shiny}.
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
@@ -98,8 +98,8 @@ app_server <- function(input, output, session) {
                     T$k.e,' , ',T$L.e,' )\n')
     }
     list(txt = txt,
-         k.m = D['k'],
-         L.m = D['L'],
+         k.d = D['k'],
+         L.d = D['L'],
          k.e = ifelse(!T$converged,NULL,T$k.e),
          L.e = ifelse(!T$converged,NULL,T$L.e)
          )

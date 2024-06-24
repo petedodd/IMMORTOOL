@@ -214,9 +214,10 @@ makeFitCheckPlot <- function(input,FT,FV){
   plot(mortality.times, mortality.fracs,
        type='b',xlim=c(0,input$Tmax),ylim=c(0,1),
        xlab='Time',ylab='Fraction',main=ttl)
-  ## lines(tz,1-exp(-(tz/L.d)^k.d),lty=2)
-  ## lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2) #TODO
+  lines(tz,1-exp(-(tz/L.d)^k.d),lty=2)
   lines(treatment.times, treatment.fracs, type = "b",col=2)
+
+  ## TODO update this
   ## CE <- tz #cumulative exposure
   ## if(input$denominator=='cohort'){
   ##   for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
