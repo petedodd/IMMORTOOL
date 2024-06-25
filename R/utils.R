@@ -193,12 +193,14 @@ makeTMplot <- function(input){
 ##' This is a utility to check fitted survival distributions against data for plausibility.
 ##' 
 ##' @title makeFitCheckPlot
-##' @param input a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d), and the maximum time (T.max), denominator type, and the mortality and treatment data.
-##' @return A plot
+##' @param input a list of parameters: the mortality times (mt), fractions (mf), and treatment times (tt), fractions (tf).
+##' @param FT a list of parameters including the maximum time (T.max), denominator type (denominator)
+##' @param FV a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d)
+##' @return A plot of data and cumulative mortality and exposure.
 ##' @author Pete Dodd
 ##' @export
 makeFitCheckPlot <- function(input,FT,FV){
-  ## once resolved fix documentation above TODO
+  ## parse inputs
   treatment.times <- FT$tt
   treatment.fracs <- FT$tf
   mortality.times <- FT$mt
@@ -217,15 +219,14 @@ makeFitCheckPlot <- function(input,FT,FV){
   lines(tz,1-exp(-(tz/L.d)^k.d),lty=2)
   lines(treatment.times, treatment.fracs, type = "b",col=2)
 
-  ## TODO update this
-  ## CE <- tz #cumulative exposure
-  ## if(input$denominator=='cohort'){
-  ##   for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
-  ## } else{
-  ##   for(i in 1:length(CE)) CE[i] <- normq(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
-  ## }
-  ## ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
-  ## lines(tz, CE,col=2,lty=2)
+  CE <- tz #cumulative exposure
+  if(input$denominator=='cohort'){
+    for(i in 1:length(CE)) CE[i] <- norm(tz[i],FV$k.e,FV$L.e,FV$k.d,FV$L.d)
+  } else{
+    for(i in 1:length(CE)) CE[i] <- normq(tz[i],FV$k.e,FV$L.e,FV$k.d,FV$L.d)
+  }
+  ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
+  lines(tz, CE,col=2,lty=2)
   
   legend('topleft',## 1, 0.9,
          legend = c("death", "treatment"),

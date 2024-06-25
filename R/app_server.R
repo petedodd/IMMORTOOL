@@ -113,7 +113,6 @@ app_server <- function(input, output, session) {
 
 
   ## ---- other stuff -------
-  ## TODO fitVals doesn't update?
   output$FitPlot <- renderPlot({
     makeFitCheckPlot(input,fractimes(),fitVals())
   })

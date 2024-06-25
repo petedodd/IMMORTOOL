@@ -7,10 +7,14 @@
 makeFitCheckPlot(input, FT, FV)
 }
 \arguments{
-\item{input}{a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d), and the maximum time (T.max), denominator type, and the mortality and treatment data.}
+\item{input}{a list of parameters: the mortality times (mt), fractions (mf), and treatment times (tt), fractions (tf).}
+
+\item{FT}{a list of parameters including the maximum time (T.max), denominator type (denominator)}
+
+\item{FV}{a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d)}
 }
 \value{
-A plot
+A plot of data and cumulative mortality and exposure.
 }
 \description{
 Plot survival and treatment distributions.
