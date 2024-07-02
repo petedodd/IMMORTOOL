@@ -65,7 +65,62 @@ app_ui <- function(request) {
                                textOutput('fits')
                                ),
                       tabPanel("Time-to-event distributions", plotOutput(outputId = "FitPlot")),
-                      tabPanel("Distribution stats", tableOutput('dists'))
+                      tabPanel("Run simulation",
+                               h2("Sliders on fitted values by default. Adjust, then press go!\n"),
+                               textOutput("fits"),
+                               radioButtons("fitsorsliders", "Use fit or slider values?",
+                                            c("Slider values" = "svl",
+                                              "Fit values" = "fvl")),
+                               h2("\n"),
+                               actionButton("runsim", "Run simulation!"),
+                               h2("\n"),
+                               ## Input: Slider for End time ----
+                               sliderInput(inputId = "T.max",
+                                           label = "Follow-up time:",
+                                           width='100%',
+                                           min = 1,
+                                           max = 100,
+                                           value = 30),
+
+                               ## Input: Slider for exposure ----
+                               sliderInput(inputId = "L.e",
+                                           label = "Exposure scale parameter:",
+                                           width='100%',
+                                           min = 0.001,
+                                           max = 500,
+                                           value = 10.6),
+                               sliderInput(inputId = "k.e",
+                                           label = "Exposure shape parameter:",
+                                           width='100%',
+                                           min = -1,
+                                           max = 20,
+                                           value = 2.3),
+
+                               ## Input: Slider for death ----
+                               sliderInput(inputId = "L.d",
+                                           label = "Death scale parameter:",
+                                           width='100%',
+                                           min = 0.001,
+                                           max = 500,
+                                           value = 428),
+                               sliderInput(inputId = "k.d",
+                                           label = "Death shape parameter:",
+                                           width='100%',
+                                           min = -1,
+                                           max = 20,
+                                           value = 0.5),
+
+                               ## Input: Time for landmark analysis ---
+                               sliderInput(inputId = "T.landmark",
+                                           label = "Time for landmark analysis:",
+                                           width='100%',
+                                           min = 1,
+                                           max = 100,
+                                           value = 3)
+
+                               ),
+                      tabPanel("Simulation results", tableOutput("tableA1"))
+                      ## tabPanel("Distribution stats", tableOutput('dists'))
                       ## ,
                       ## tabPanel("Time-to-event distributions", plotOutput(outputId = "TMPlot")),
                       ## tabPanel("Time-to-event distributions", plotOutput(outputId = "distPlot")),

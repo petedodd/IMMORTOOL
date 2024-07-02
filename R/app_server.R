@@ -8,13 +8,24 @@ app_server <- function(input, output, session) {
   ## Your application server logic
 
   ## ---------- create cohort ---------------
-  ITBoutput <- reactive({
-    ITBstats(N=1e4, Tstop=input$T.max,
-             rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
-             rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
-             rtt.ltfu = function(n) rweibull(n,1,36500))
+  ## ITBoutput <- reactive({
+  ##   ITBstats(N=1e4, Tstop=input$T.max,
+  ##            rtt.exposure = function(n) rweibull(n,input$k.e,input$L.e),
+  ##            rtt.death = function(n) rweibull(n,input$k.d,input$L.d),
+  ##            rtt.ltfu = function(n) rweibull(n,1,36500))
+  ## })
+
+  ## TODO need to build in toggling of input
+  ITBoutput <- eventReactive(input$runsim, {
+    ITBstats(
+      N = 1e4, Tstop = input$T.max,
+      rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
+      rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
+      rtt.ltfu = function(n) rweibull(n, 1, 36500)
+    )
   })
 
+  
   ##  --------- fitting --------------------
   ## making boxes for fitting
   output$morttimeinput <- renderUI({
@@ -207,10 +218,11 @@ app_server <- function(input, output, session) {
   ##   makeEffectBySamplePlot(ANS)
   ## })
 
-  ## output$tableA1 <- renderTable({
-  ##   ANS <- ITBoutput()
-  ##   ANS$table.a
-  ## })
+  output$tableA1 <- renderTable({
+    ANS <- ITBoutput()
+    ANS$table.a
+  })
+  
   ## output$tableA2 <- renderTable({
   ##   ANS <- ITBoutput()
   ##   data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.a)
