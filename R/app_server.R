@@ -15,17 +15,18 @@ app_server <- function(input, output, session) {
   ##            rtt.ltfu = function(n) rweibull(n,1,36500))
   ## })
 
-  ## TODO need to build in toggling of input
   ITBoutput <- eventReactive(input$runsim, {
-    ITBstats(
+    ans <- ITBstats(
       N = 1e4, Tstop = input$T.max,
       rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
       rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
       rtt.ltfu = function(n) rweibull(n, 1, 36500)
     )
+    ans$N <- 100
+    ans
   })
 
-  
+
   ##  --------- fitting --------------------
   ## making boxes for fitting
   output$morttimeinput <- renderUI({
@@ -141,71 +142,13 @@ app_server <- function(input, output, session) {
                `97.5% percentile`=qweibull(0.975,shape=2,scale=c(input$L.e,input$L.d,36500))
                )
   })
-  
+
   ## output$distPlot <- renderPlot({
   ##   makeDistPlot(input)
   ## })
 
   ## output$TMPlot <- renderPlot({
   ##   makeTMplot(input)
-  ## })
-
-  
-  ## ## new approach designed to allow persistence of data between tabs:
-  ## v <- reactiveValues(data=NULL) 
- 
-  ## ## fit action TODO
-  ## observeEvent(input$do, {
-  ##   ## mortality fit first
-  ##   mt <- mf <- list()
-  ##   for(i in 1:input$mortnum){
-  ##     mt[[i]] <- input[[paste0('morttime',i)]]
-  ##     mf[[i]] <- input[[paste0('mortfrac',i)]]
-  ##   }
-  ##   mt <- unlist(mt)
-  ##   mf <- unlist(mf)
-  ##   MD <- cbind(mt,mf)
-  ##   if(any(!MD>0)) stop('Mortality data not >0!')
-  ##   if(!all(mt==cummax(mt))) stop('Mortality times do not increase!')
-  ##   if(!all(mf==cummax(mf))) stop('Mortality fractions do not increase!')
-  ##   ## D <- getMortParz(MD) #fit TODO old version
-  ##   D <- Yfit(mt, mf) #mortality.parms TODO denominator button
-  ##   ## then treatment fit
-  ##   if(!any(!is.finite(D))){
-  ##     tt <- tf <- list()
-  ##     for(i in 1:input$TTEnum){
-  ##       tt[[i]] <- input[[paste0('TTEtime',i)]]
-  ##       tf[[i]] <- input[[paste0('TTEfrac',i)]]
-  ##     }
-  ##     tt <- unlist(tt)
-  ##     tf <- unlist(tf)
-  ##     TD <- cbind(tt,tf)
-  ##     if(any(!TD>0)) stop('TTE data not >0!')
-  ##     if(!all(tt==cummax(tt))) stop('Treatment times do not increase!')
-  ##     if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
-  ##     ## T <- getTxParz(TD,D$k.d,D$L.d) #old version TODO denominator type
-  ##     T <- getTxParz(TD,D)
-  ##   }
-  ##   ## if(!D$converged){
-  ##   ##   txt <- 'Unfortunately, the mortality fit did not converge!'
-  ##   ## } else 
-  ##   if(!T$converged){
-  ##     txt <- 'Unfortunately, while the mortality converged, the treatment fit did not converge!'
-  ##   } else {
-  ##     ## output
-  ##     txt <- paste0('Suggested parameters based on this are:\n Mortality (shape,scale)=(',
-  ##                   D['k'],' , ',D['L'],' )\n Treatment (shape,scale)=(',
-  ##                   T$k.e,' , ',T$L.e,' )\n')
-  ##   }
-  ##   ## capture outputs
-  ##   v$k.e <- T$k.e; v$L.e <- T$L.e
-  ##   v$k.d <- D['k']; v$L.d <- D['L']
-  ##   v$txt <- txt
-  ## })
-
-  ## output$fits <- renderText({
-  ##   if(is.null(v$txt)) return()
-  ##   v$txt
   ## })
 
   ## output$FitPlot <- renderPlot({
@@ -219,22 +162,21 @@ app_server <- function(input, output, session) {
   ## })
 
   output$tableA1 <- renderTable({
+    Nseq <- c(10, 20, 50, 100, 200, 300, 500, 1000)
     ANS <- ITBoutput()
-    ANS$table.a
+    anslist <- list()
+    for(n in Nseq){
+      ANS$N <- n
+      anslist[[paste0(n)]] <- ANS
+    }
+    anso <- makeCItable(anslist)
+    anso <- anso[,c('id','CI.a','CI.b','CI.c','CI.d')]
+    names(anso) <- c(
+      "N", "a) person time from 0", "b) person time from exposure",
+      "c) landmark", "d) excluding early events & reset clock"
+    )
+    anso
   })
-  
-  ## output$tableA2 <- renderTable({
-  ##   ANS <- ITBoutput()
-  ##   data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.a)
-  ## })
-  ## output$tableB1 <- renderTable({
-  ##   ANS <- ITBoutput()
-  ##   ANS$table.b
-  ## })
-  ## output$tableB2 <- renderTable({
-  ##   ANS <- ITBoutput()
-  ##   data.table(exposed=ANS$F.e,died=ANS$F.d,RR=ANS$RR.b)
-  ## })
 
 
 }
