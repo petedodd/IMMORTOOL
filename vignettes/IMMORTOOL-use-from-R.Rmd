@@ -14,8 +14,201 @@ knitr::opts_chunk$set(
 )
 ```
 
+# General background
+
 ```{r setup}
 library(IMMORTOOL)
 ```
 
-This is just testing the toolchain for writing a vignette
+NOTE this vignette is somewhat slow to build.
+TODO add text and resize figures
+
+
+```{r}
+cohort.size <- 5e6 #stable to 2 dp
+set.seed(1234)
+```
+
+
+
+# First set of examples
+
+
+## van der Vaart
+
+```{r}
+## Main result (demonstration naive analysis)
+ans.vanderVaart <- makeResultList(
+                      c(7,30,90),
+                      c(0.05,0.21,0.31),
+                      c(6,9,13,90),
+                      c(0.09,0.19,0.28,0.37),
+                      N=147,Tmax=90,Tlandmark=1,Tearly=2,
+                      plotfit=TRUE,
+                      simulation.cohort.size = cohort.size)
+
+```
+
+## Jones and Fowler
+
+```{r}
+
+## mortality
+tzm <- c(1,2,3,4,5,6,7,8,9,10,11,12,90)
+fzm <- c(0.01,0.04,0.05,0.05,0.06,0.07,0.08,0.08,0.09,0.11,0.12,0.13,0.20)
+
+## treatment
+tzt <- c(1,2,45)
+fzt <- c(0.73,0.84,0.93)
+
+## Main result 
+ans.JonesandFowler <- makeResultList(tzm,fzm,tzt,fzt,
+                                     N=117,Tmax=90,Tlandmark=1,Tearly=1,
+                                     plotfit=TRUE,
+                                     simulation.cohort.size = cohort.size)
+
+```
+
+
+
+## Geleris
+
+```{r}
+tzm <- c(1,30)
+fzm <- c(0.05,0.25)
+tzt <- c(0.1,1,10)
+fzt <- c(0.27,0.51,0.59)
+
+## Standard assumptions
+ans.Geleris <- makeResultList(tzm,fzm,tzt,fzt,
+                              N=346,Tmax=30,Tlandmark=2,Tearly=1,
+                              plotfit=TRUE,
+                              simulation.cohort.size = cohort.size)
+```
+
+
+## Combined
+
+```{r}
+## Calculate confidence intervals: make list of all results
+nmz <- c('van der Vaart','Jones and Fowler','Geleris')
+L <- list(ans.vanderVaart,ans.JonesandFowler,ans.Geleris)
+names(L) <- nmz
+
+## create table from results list
+tab <- makeCItable(L)
+
+## show just the id and RR+CIs:
+knitr::kable(tab[,c('id','CI.a','CI.b','CI.c','CI.d')])
+
+```
+
+
+# Second set of examples
+
+
+```{r}
+Tmax <- 30
+Tlandmark <- 1
+Tearly <- 1
+```
+
+
+## Adalat
+
+```{r}
+## Standard assumptions
+ans.Adalat.standard <- makeResultList(c(2,8,30),c(0.07,0.14,0.14),
+                                      c(0.5,30),c(0.19,0.38),
+                                      N=3,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                      simulation.cohort.size = 1e+08)
+
+## Low ITB assumptions
+ans.Adalat.low <- makeResultList(c(2,8,30),c(0.05,0.14,0.14),
+                                 c(0.25,30),c(0.19, 0.38),
+                                 N=3,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                 simulation.cohort.size = 1e+08)
+
+## High ITB assumptions
+ans.Adalat.high <- makeResultList(c(2,8,30),c(0.10,0.14,0.14),
+                                  c(1, 30),c(0.19, 0.38),
+                                  N=3,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                  simulation.cohort.size = 1e+08)
+
+
+```
+
+
+## Carapetis
+
+```{r}
+
+## Standard assumptions
+ans.Carapetis.standard <- makeResultList(c(2,8,30),c(0.09,0.19,0.19),
+                                         c(0.5,30),c(0.18,0.35),
+                                         N=7,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                         simulation.cohort.size = 1e+08)
+
+## Low ITB assumptions
+ans.Carapetis.low <- makeResultList(c(2,8,30),c(0.06,0.19,0.19),
+                                    c(0.25,30),c(0.18,0.35),
+                                    N=7,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                    simulation.cohort.size = 1e+08)
+
+## High ITB assumptions
+ans.Carapetis.high <- makeResultList(c(2,8,30),c(0.13,0.19,0.19),
+                                     c(1,30),c(0.18,0.35),
+                                     N=7,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                     simulation.cohort.size = 1e+08)
+
+
+```
+
+
+
+## Linner
+
+```{r}
+
+## Standard assumptions
+ans.Linner.standard <- makeResultList(c(2,8,30),c(0.13,0.27,0.27),
+                                      c(0.5,30),c(0.2,0.4),
+                                      N=14,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                      simulation.cohort.size = 1e+08)
+
+## Low ITB assumptions
+ans.Linner.low <- makeResultList(c(2,8,30),c(0.09,0.27,0.27),
+                                 c(0.25,30),c(0.2,0.4),
+                                 N=14,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                 simulation.cohort.size = 1e+08)
+
+## High ITB assumptions
+ans.Linner.high <- makeResultList(c(2,8,30),c(0.18,0.27,0.27),
+                                  c(1,30),c(0.2,0.4),
+                                  N=14,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
+                                  simulation.cohort.size = 1e+08)
+
+```
+
+
+
+## Combined
+
+```{r}
+### Calculate confidence intervals: make list of all results
+nmz <- c('Adalat.standard','Carapetis.standard','Linner.standard',
+         'Adalat.low','Carapetis.low','Linner.low',
+         'Adalat.high','Carapetis.high','Linner.high')
+L <- list(ans.Adalat.standard,ans.Carapetis.standard,ans.Linner.standard,
+          ans.Adalat.low,ans.Carapetis.low,ans.Linner.low,
+          ans.Adalat.high,ans.Carapetis.high,ans.Linner.high)
+names(L) <- nmz
+
+
+## create table from results list
+tab <- makeCItable(L)
+
+## show just the id and RR+CIs:
+knitr::kable(tab[,c('id','CI.a','CI.b','CI.c','CI.d')])
+
+```

@@ -26,21 +26,24 @@ app_server <- function(input, output, session) {
     ans
   })
 
-
   ##  --------- fitting --------------------
   ## making boxes for fitting
   output$morttimeinput <- renderUI({
     mortnum <- as.integer(input$mortnum)
     lapply(1:mortnum, function(i) {
-      numericInput(inputId = paste0("morttime", i), label = paste("Time ", i),
-                   value=i, min = 0, max = 90) #TODO change max
+      numericInput(
+        inputId = paste0("morttime", i), label = paste("Time ", i),
+        value = i, min = 0, max = 150
+      ) # TODO change max
     })
   })
   output$mortfracinput <- renderUI({
     mortnum <- as.integer(input$mortnum)
     lapply(1:mortnum, function(i) {
-      numericInput(inputId = paste0("mortfrac", i), label = paste("Fraction dead ", i),
-                   value=i/10, min = 0, max = 1)
+      numericInput(
+        inputId = paste0("mortfrac", i), label = paste("Fraction dead ", i),
+        value = i / 10, min = 0, max = 1
+      )
     })
   })
 
@@ -64,57 +67,61 @@ app_server <- function(input, output, session) {
   fractimes <- reactive({
     ## mortality fit first
     mt <- mf <- list()
-    for(i in 1:input$mortnum){
-      mt[[i]] <- input[[paste0('morttime',i)]]
-      mf[[i]] <- input[[paste0('mortfrac',i)]]
+    for (i in 1:input$mortnum) {
+      mt[[i]] <- input[[paste0("morttime", i)]]
+      mf[[i]] <- input[[paste0("mortfrac", i)]]
     }
     mt <- unlist(mt)
     mf <- unlist(mf)
-    if(any(!c(mt,mf)>0)) stop('Mortality data not >0!')
-    if(!all(mt==cummax(mt))) stop('Mortality times do not increase!')
-    if(!all(mf==cummax(mf))) stop('Mortality fractions do not increase!')
+    if (any(!c(mt, mf) > 0)) stop("Mortality data not >0!")
+    if (!all(mt == cummax(mt))) stop("Mortality times do not increase!")
+    if (!all(mf == cummax(mf))) stop("Mortality fractions do not increase!")
     ## treatment
     tt <- tf <- list()
-    for(i in 1:input$TTEnum){
-      tt[[i]] <- input[[paste0('TTEtime',i)]]
-      tf[[i]] <- input[[paste0('TTEfrac',i)]]
+    for (i in 1:input$TTEnum) {
+      tt[[i]] <- input[[paste0("TTEtime", i)]]
+      tf[[i]] <- input[[paste0("TTEfrac", i)]]
     }
     tt <- unlist(tt)
     tf <- unlist(tf)
-    if(any(!c(tt,tf)>0)) stop('Mortality data not >0!')
-    if(!all(tt==cummax(tt))) stop('Treatment times do not increase!')
-    if(!all(tf==cummax(tf))) stop('Treatment fractions do not increase!')
-    list(mt=mt,mf=mf,tt=tt,tf=tf)
+    if (any(!c(tt, tf) > 0)) stop("Mortality data not >0!")
+    if (!all(tt == cummax(tt))) stop("Treatment times do not increase!")
+    if (!all(tf == cummax(tf))) stop("Treatment fractions do not increase!")
+    list(mt = mt, mf = mf, tt = tt, tf = tf)
   })
-
 
   ## fit action TODO
   fitVals <- eventReactive(input$do, {
-  ## fitVals <- reactive({
+    ## fitVals <- reactive({
     FT <- fractimes()
-    mt <- FT$mt; mf <- FT$mf
-    tt <- FT$tt; tf <- FT$tf
+    mt <- FT$mt
+    mf <- FT$mf
+    tt <- FT$tt
+    tf <- FT$tf
     ## mortality fit
     D <- Yfit(mt, mf)
     ## then treatment fit
-    if(!any(!is.finite(D))){
-      TD <- cbind(tt,tf)
-      T <- getTxParz(TD,D)
+    if (!any(!is.finite(D))) {
+      TD <- cbind(tt, tf)
+      T <- getTxParz(TD, D)
     }
-    if(!T$converged){
-      txt <- 'Unfortunately, while the mortality converged, the treatment fit did not converge!'
+    if (!T$converged) {
+      txt <- "Unfortunately, while the mortality converged, the treatment fit did not converge!"
     } else {
       ## output
-      txt <- paste0('Suggested parameters based on this are:\n Mortality (shape,scale)=(',
-                    D['k'],' , ',D['L'],' )\n Treatment (shape,scale)=(',
-                    T$k.e,' , ',T$L.e,' )\n')
+      txt <- paste0(
+        "Suggested parameters based on this are:\n Mortality (shape,scale)=(",
+        D["k"], " , ", D["L"], " )\n Treatment (shape,scale)=(",
+        T$k.e, " , ", T$L.e, " )\n"
+      )
     }
-    list(txt = txt,
-         k.d = D['k'],
-         L.d = D['L'],
-         k.e = ifelse(!T$converged,NULL,T$k.e),
-         L.e = ifelse(!T$converged,NULL,T$L.e)
-         )
+    list(
+      txt = txt,
+      k.d = D["k"],
+      L.d = D["L"],
+      k.e = ifelse(!T$converged, NULL, T$k.e),
+      L.e = ifelse(!T$converged, NULL, T$L.e)
+    )
   })
 
   ## text to report results
@@ -132,29 +139,22 @@ app_server <- function(input, output, session) {
   output$dists <- renderTable({
     k <- 2
     L.l <- 36500
-    data.table(event=c('exposure','death','ltfu'),
-               mean=c(input$L.e*gamma(1+1/k),input$L.d*gamma(1+1/k),36500*gamma(1+1/k)),
-               sd=c(input$L.e,input$L.d,36500)*sqrt(gamma(1+2/k)-gamma(1+1/2)^2),
-               `2.5% percentile`=qweibull(0.025,shape=2,scale=c(input$L.e,input$L.d,36500)),
-               `25% percentile`=qweibull(0.25,shape=2,scale=c(input$L.e,input$L.d,36500)),
-               `50% percentile`=qweibull(0.5,shape=2,scale=c(input$L.e,input$L.d,36500)),
-               `75% percentile`=qweibull(0.75,shape=2,scale=c(input$L.e,input$L.d,36500)),
-               `97.5% percentile`=qweibull(0.975,shape=2,scale=c(input$L.e,input$L.d,36500))
-               )
+    data.table(
+      event = c("exposure", "death", "ltfu"),
+      mean = c(input$L.e * gamma(1 + 1 / k), input$L.d * gamma(1 + 1 / k), 36500 * gamma(1 + 1 / k)),
+      sd = c(input$L.e, input$L.d, 36500) * sqrt(gamma(1 + 2 / k) - gamma(1 + 1 / 2)^2),
+      `2.5% percentile` = qweibull(0.025, shape = 2, scale = c(input$L.e, input$L.d, 36500)),
+      `25% percentile` = qweibull(0.25, shape = 2, scale = c(input$L.e, input$L.d, 36500)),
+      `50% percentile` = qweibull(0.5, shape = 2, scale = c(input$L.e, input$L.d, 36500)),
+      `75% percentile` = qweibull(0.75, shape = 2, scale = c(input$L.e, input$L.d, 36500)),
+      `97.5% percentile` = qweibull(0.975, shape = 2, scale = c(input$L.e, input$L.d, 36500))
+    )
   })
 
   ## output$distPlot <- renderPlot({
   ##   makeDistPlot(input)
   ## })
 
-  ## output$TMPlot <- renderPlot({
-  ##   makeTMplot(input)
-  ## })
-
-  ## output$FitPlot <- renderPlot({
-  ##   if(is.null(v$txt)) return()
-  ##   makeFitCheckPlot(input)
-  ## })
 
   ## output$resultPlot <- renderPlot({
   ##   ANS <- ITBoutput()
@@ -165,12 +165,12 @@ app_server <- function(input, output, session) {
     Nseq <- c(10, 20, 50, 100, 200, 300, 500, 1000)
     ANS <- ITBoutput()
     anslist <- list()
-    for(n in Nseq){
+    for (n in Nseq) {
       ANS$N <- n
       anslist[[paste0(n)]] <- ANS
     }
     anso <- makeCItable(anslist)
-    anso <- anso[,c('id','CI.a','CI.b','CI.c','CI.d')]
+    anso <- anso[, c("id", "CI.a", "CI.b", "CI.c", "CI.d")]
     names(anso) <- c(
       "N", "a) person time from 0", "b) person time from exposure",
       "c) landmark", "d) excluding early events & reset clock"

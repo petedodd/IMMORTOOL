@@ -125,8 +125,10 @@ makeDistPlot <- function(input){
                            args=list(shape=input$k.d,scale=input$L.d),n=1e3) +
     ggplot2::geom_function(ggplot2::aes(colour="LTFU"),fun=dweibull,
                            args=list(shape=input$k.l,scale=input$L.l),n=1e3) +
-    ggplot2::xlab('Time') + ggplot2::ylab('Hazard') +
-    ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
+    ggplot2::xlab("Time") +
+    ggplot2::ylab("Hazard") +
+    ggplot2::ggtitle("NB: this does not account for competing hazards")+
+    ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position="top")
 }
 
 
@@ -143,21 +145,25 @@ makeDistPlot <- function(input){
 ##' @import ggplot2
 makeEffectBySamplePlot <- function(ANS){
   ## make plot data
-  pfd <- data.table::data.table(n=c(10,20,30,50,80,100,2:10*100))
-  pfd[,RR.a:=ANS$RR.a]; pfd[,RR.b:=ANS$RR.b]
-  pfd <- data.table::melt(pfd,id='n')
-  pfd[,c('qnt','type'):=data.table::tstrsplit(variable,split='\\.')]
-  pfd[,SElnIRR1:=ANS$SElnIRR1.a] #same everywhere
-  pfd[,RRhi:=exp(log(value) + 1.96*SElnIRR1/sqrt(n))]
-  pfd[,RRlo:=exp(log(value) - 1.96*SElnIRR1/sqrt(n))]
-  pfd[,analysis:=type]
-  ggplot2::ggplot(pfd,ggplot2::aes(x=n,y=value,ymin=RRlo,ymax=RRhi,col=analysis,group=analysis))+
-    ggplot2::geom_line()+## geom_pointrange()+
-    ggplot2::geom_line(ggplot2::aes(y=RRhi),lty=2)+
-    ggplot2::geom_line(ggplot2::aes(y=RRlo),lty=2)+
-    ggplot2::xlab('Sample size')+ggplot2::ylab('Rate ratio')+
-    ggplot2::geom_hline(yintercept=1,col='black',lty=3)+
-    ggplot2::theme(legend.position='top')
+  pfd <- data.table::data.table(n = c(10, 20, 30, 50, 80, 100, 2:10 * 100))
+  pfd[, RR.a := ANS$RR.a]
+  pfd[, RR.b := ANS$RR.b]
+  pfd <- data.table::melt(pfd, id = "n")
+  pfd[, c("qnt", "type") := data.table::tstrsplit(variable, split = "\\.")]
+  pfd[, SElnIRR1 := ANS$SElnIRR1.a] # same everywhere
+  pfd[, RRhi := exp(log(value) + 1.96 * SElnIRR1 / sqrt(n))]
+  pfd[, RRlo := exp(log(value) - 1.96 * SElnIRR1 / sqrt(n))]
+  pfd[, analysis := type]
+  ggplot2::ggplot(pfd,
+                  ggplot2::aes(x = n, y = value, ymin = RRlo, ymax = RRhi,
+                               col = analysis, group = analysis)) +
+    ggplot2::geom_line() + ## geom_pointrange()+
+    ggplot2::geom_line(ggplot2::aes(y = RRhi), lty = 2) +
+    ggplot2::geom_line(ggplot2::aes(y = RRlo), lty = 2) +
+    ggplot2::xlab("Sample size") +
+    ggplot2::ylab("Rate ratio") +
+    ggplot2::geom_hline(yintercept = 1, col = "black", lty = 3) +
+    ggplot2::theme(legend.position = "top")
 }
 
 ## Weibull scaled to have max height = 1
@@ -165,25 +171,6 @@ dweibull1 <- function(x,shape,scale){
   kk <- (shape-1)/shape
   dweibull(x=x,shape=shape,scale=scale)/
     ((shape/scale) * (kk^kk) * exp(-kk) )
-}
-
-##' Plot survival and treatment distributions.
-##'
-##' The plot returned is the survival (from death) function with a scaled time-to-treatment distribution superimposed. Note: the time-to-treatment distribution will differ from the time-to-treatment distribution in the data due to competition with mortality. The competition with mortality is accounted for in fitting and simulation, but not in this plot.
-##' @title Plot survival and treatment distributions.
-##' @param input a list of parameters including Weibull treatment distribution parameters (k.e, L.e), Weibull mortality distribution parameters (k.d, L.d), and the maximum time (T.max).
-##' @return A plot with survival and treatment times
-##' @author Pete Dodd
-##' @export
-makeTMplot <- function(input){
-  ggplot2::ggplot() +
-    ggplot2::xlim(0,input$T.max) +
-    ggplot2::geom_function(ggplot2::aes(colour="exposure times"),fun=dweibull1,
-                           args=list(shape=input$k.e,scale=input$L.e),n=1e3) +
-    ggplot2::geom_function(ggplot2::aes(colour="survival function"),
-                           fun=function(x) exp(-(x/input$L.d)^input$k.d),n=1e3) +
-    ggplot2::xlab('Time') + ggplot2::ylab('') +
-    ggplot2::theme(legend.title=ggplot2::element_blank(),legend.position='top')
 }
 
 
@@ -210,27 +197,28 @@ makeFitCheckPlot <- function(input,FT,FV){
 
   ## plotting
   tz <- seq(from=0,to=input$Tmax,by=0.1)
-  ttl <- ifelse(input$denominator=='cohort',
-                'Treatment denominator = whole cohort',
-                'Treatment denominator = those ultimately treated')
+  ttl <- ifelse(input$denominator == "cohort",
+    "Treatment denominator = whole cohort",
+    "Treatment denominator = those ultimately treated"
+  )
   plot(mortality.times, mortality.fracs,
-       type='b',xlim=c(0,input$Tmax),ylim=c(0,1),
-       xlab='Time',ylab='Fraction',main=ttl)
-  lines(tz,1-exp(-(tz/L.d)^k.d),lty=2)
-  lines(treatment.times, treatment.fracs, type = "b",col=2)
+    type = "b", xlim = c(0, input$Tmax), ylim = c(0, 1),
+    xlab = "Time", ylab = "Fraction", main = ttl
+  )
+  lines(tz, 1 - exp(-(tz / L.d)^k.d), lty = 2)
+  lines(treatment.times, treatment.fracs, type = "b", col = 2)
 
-  CE <- tz #cumulative exposure
-  if(input$denominator=='cohort'){
-    for(i in 1:length(CE)) CE[i] <- norm(tz[i],FV$k.e,FV$L.e,FV$k.d,FV$L.d)
-  } else{
-    for(i in 1:length(CE)) CE[i] <- normq(tz[i],FV$k.e,FV$L.e,FV$k.d,FV$L.d)
+  CE <- tz # cumulative exposure
+  if (input$denominator == "cohort") {
+    for (i in 1:length(CE)) CE[i] <- norm(tz[i], FV$k.e, FV$L.e, FV$k.d, FV$L.d)
+  } else {
+    for (i in 1:length(CE)) CE[i] <- normq(tz[i], FV$k.e, FV$L.e, FV$k.d, FV$L.d)
   }
   ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
-  lines(tz, CE,col=2,lty=2)
-  
-  legend('topleft',## 1, 0.9,
+  lines(tz, CE, col = 2, lty = 2)
+  legend("topleft", ## 1, 0.9,
          legend = c("death", "treatment"),
-         col = c("black","red"),lty=1,pch=1
+         col = c("black", "red"), lty = 1, pch = 1
          )
 }
 
@@ -266,12 +254,12 @@ Yfit <- function(t, F) {
 ##' @export
 getTxParz <- function(M,mort.parms,denominator='cohort'){
   y <- log(mort.parms)
-  initial.guess <- log(Yfit(M[,1],M[,2])) #non-competing, denominator=cohort version
-  if(any(!is.finite(initial.guess))) initial.guess <- c(0,0)
-  out <- optim(par=initial.guess,fn=function(x) experr(M,c(x,y),denominator=denominator))
-  ans <- list(k.e=exp(out$par[1]),L.e=exp(out$par[2]),converged=TRUE)
-  if(abs(out$convergence)>0) ans$converged <- FALSE
-  if(!ans$converged) warning('Treatment parameter fitting has not converged!')
+  initial.guess <- log(Yfit(M[, 1], M[, 2])) # non-competing, denominator=cohort version
+  if (any(!is.finite(initial.guess))) initial.guess <- c(0, 0)
+  out <- optim(par = initial.guess, fn = function(x) experr(M, c(x, y), denominator = denominator))
+  ans <- list(k.e = exp(out$par[1]), L.e = exp(out$par[2]), converged = TRUE)
+  if (abs(out$convergence) > 0) ans$converged <- FALSE
+  if (!ans$converged) warning("Treatment parameter fitting has not converged!")
   ans
 }
 
@@ -290,12 +278,15 @@ normq <- function(T,ke,le,km,lm) norm(T,ke,le,km,lm)/norm(Inf,ke,le,km,lm)
 ## error for treatment/exposure, as above
 experr <- function(M,x,denominator='cohort'){
   x <- exp(x)
-  if( !(denominator=='cohort' | denominator=='exposed') )
+  if (!(denominator == "cohort" | denominator == "exposed")) {
     stop("denominator must either by 'cohort' or 'exposed'")
-  if(denominator=='cohort')
-    tmp <- apply(M,1,function(y) (norm(y[1],x[1],x[2],x[3],x[4])-y[2])^2) #vector of squared errors
-  if(denominator=='exposed')
-      tmp <- apply(M,1,function(y) (normq(y[1],x[1],x[2],x[3],x[4])-y[2])^2) #vector of squared errors
+  }
+  if (denominator == "cohort") {
+    tmp <- apply(M, 1, function(y) (norm(y[1], x[1], x[2], x[3], x[4]) - y[2])^2)
+  } # vector of squared errors
+  if (denominator == "exposed") {
+    tmp <- apply(M, 1, function(y) (normq(y[1], x[1], x[2], x[3], x[4]) - y[2])^2)
+  } # vector of squared errors
   sum(tmp)
 }
 
@@ -358,25 +349,27 @@ makeResultList <- function(mortality.times, mortality.fracs,
 
   if(plotfit){
     tz <- seq(from=0,to=Tmax,by=0.1)
-    ttl <- ifelse(denominator=='cohort',
-                  'Treatment denominator = whole cohort',
-                  'Treatment denominator = those ultimately treated')
+    ttl <- ifelse(denominator == "cohort",
+      "Treatment denominator = whole cohort",
+      "Treatment denominator = those ultimately treated"
+    )
     plot(mortality.times, mortality.fracs,
-         type='b',xlim=c(0,Tmax),ylim=c(0,1),
-         xlab='Time',ylab='Fraction',main=ttl)
-    lines(tz,1-exp(-(tz/input$L.d)^input$k.d),lty=2)
-    lines(treatment.times, treatment.fracs, type = "b",col=2)
-    CE <- tz #cumulative exposure
-    if(denominator=='cohort'){
-      for(i in 1:length(CE)) CE[i] <- norm(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
-    } else{
-      for(i in 1:length(CE)) CE[i] <- normq(tz[i],input$k.e,input$L.e,input$k.d,input$L.d)
+      type = "b", xlim = c(0, Tmax), ylim = c(0, 1),
+      xlab = "Time", ylab = "Fraction", main = ttl
+    )
+    lines(tz, 1 - exp(-(tz / input$L.d)^input$k.d), lty = 2)
+    lines(treatment.times, treatment.fracs, type = "b", col = 2)
+    CE <- tz # cumulative exposure
+    if (denominator == "cohort") {
+      for (i in 1:length(CE)) CE[i] <- norm(tz[i], input$k.e, input$L.e, input$k.d, input$L.d)
+    } else {
+      for (i in 1:length(CE)) CE[i] <- normq(tz[i], input$k.e, input$L.e, input$k.d, input$L.d)
     }
     ## CE <- 1 - exp(-(tz / input$L.e)^input$k.e)
-    lines(tz, CE,col=2,lty=2)
-    legend('topleft',## 1, 0.9,
+    lines(tz, CE, col = 2, lty = 2)
+    legend("topleft", ## 1, 0.9,
       legend = c("death", "treatment"),
-      col = c("black","red"),lty=1,pch=1
+      col = c("black", "red"), lty = 1, pch = 1
     )
   }
 
@@ -407,17 +400,17 @@ makeCItable <- function(list.of.results){
   ## names
   nmz <- names(list.of.results)
   ## numbers
-  Nz <- unlist(lapply(list.of.results,function(X)X[['N']]))
+  Nz <- unlist(lapply(list.of.results, function(X) X[["N"]]))
   ## mid-points
-  Az <- unlist(lapply(list.of.results,function(X)X[['RR.a']]))
-  Bz <- unlist(lapply(list.of.results,function(X)X[['RR.b']]))
-  Cz <- unlist(lapply(list.of.results,function(X)X[['RR.c']]))
-  Dz <- unlist(lapply(list.of.results,function(X)X[['RR.d']]))
+  Az <- unlist(lapply(list.of.results, function(X) X[["RR.a"]]))
+  Bz <- unlist(lapply(list.of.results, function(X) X[["RR.b"]]))
+  Cz <- unlist(lapply(list.of.results, function(X) X[["RR.c"]]))
+  Dz <- unlist(lapply(list.of.results, function(X) X[["RR.d"]]))
   ## death fractions
-  faz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.a']]))
-  fbz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.b']]))
-  fcz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.c']]))
-  fdz <- unlist(lapply(list.of.results,function(X)X[['frac.d.control.d']]))
+  faz <- unlist(lapply(list.of.results, function(X) X[["frac.d.control.a"]]))
+  fbz <- unlist(lapply(list.of.results, function(X) X[["frac.d.control.b"]]))
+  fcz <- unlist(lapply(list.of.results, function(X) X[["frac.d.control.c"]]))
+  fdz <- unlist(lapply(list.of.results, function(X) X[["frac.d.control.d"]]))
   ## CI factors
   FAZ <- CIfactor(Nz,faz)
   FBZ <- CIfactor(Nz,fbz)
@@ -429,12 +422,14 @@ makeCItable <- function(list.of.results){
   C <- paste0(signif(Cz,2)," (",signif(Cz/FCZ,2),"-",signif(Cz*FCZ,2),")") #format CIs
   D <- paste0(signif(Dz,2)," (",signif(Dz/FDZ,2),"-",signif(Dz*FDZ,2),")") #format CIs
   ## answer
-  tab <- data.frame(id=nmz,N=Nz,
-                    RR.a=Az,RR.b=Bz,RR.c=Cz,RR.d=Dz,
-                    frac.d.control.a=faz,frac.d.control.b=fbz,
-                    frac.d.control.c=fcz,frac.d.control.d=fdz,
-                    F.a=FAZ,F.b=FBZ,F.c=FCZ,F.d=FDZ,
-                    CI.a=A,CI.b=B,CI.c=C,CI.d=D)
+  tab <- data.frame(
+    id = nmz, N = Nz,
+    RR.a = Az, RR.b = Bz, RR.c = Cz, RR.d = Dz,
+    frac.d.control.a = faz, frac.d.control.b = fbz,
+    frac.d.control.c = fcz, frac.d.control.d = fdz,
+    F.a = FAZ, F.b = FBZ, F.c = FCZ, F.d = FDZ,
+    CI.a = A, CI.b = B, CI.c = C, CI.d = D
+  )
   rownames(tab) <- NULL
   tab
 }
