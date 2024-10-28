@@ -1,0 +1,21 @@
+---
+title: "IMMORTOOL-use-from-R"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{IMMORTOOL-use-from-R}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(IMMORTOOL)
+```
+
+This is just testing the toolchain for writing a vignette
