@@ -36,7 +36,7 @@ set.seed(1234)
 
 ## van der Vaart
 
-```{r}
+```{r,fig.dim=c(7,6)}
 ## Main result (demonstration naive analysis)
 ans.vanderVaart <- makeResultList(
                       c(7,30,90),
@@ -51,7 +51,7 @@ ans.vanderVaart <- makeResultList(
 
 ## Jones and Fowler
 
-```{r}
+```{r,fig.dim=c(7,6)}
 
 ## mortality
 tzm <- c(1,2,3,4,5,6,7,8,9,10,11,12,90)
@@ -73,7 +73,7 @@ ans.JonesandFowler <- makeResultList(tzm,fzm,tzt,fzt,
 
 ## Geleris
 
-```{r}
+```{r,fig.dim=c(7,6)}
 tzm <- c(1,30)
 fzm <- c(0.05,0.25)
 tzt <- c(0.1,1,10)
@@ -116,24 +116,25 @@ Tearly <- 1
 
 ## Adalat
 
-```{r}
+```{r,fig.dim=c(7,6)}
 ## Standard assumptions
 ans.Adalat.standard <- makeResultList(c(2,8,30),c(0.07,0.14,0.14),
                                       c(0.5,30),c(0.19,0.38),
                                       N=3,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                      simulation.cohort.size = 1e+08)
+                                      plotfit=TRUE,
+                                      simulation.cohort.size = cohort.size)
 
 ## Low ITB assumptions
 ans.Adalat.low <- makeResultList(c(2,8,30),c(0.05,0.14,0.14),
                                  c(0.25,30),c(0.19, 0.38),
                                  N=3,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                 simulation.cohort.size = 1e+08)
+                                 simulation.cohort.size = cohort.size)
 
 ## High ITB assumptions
 ans.Adalat.high <- makeResultList(c(2,8,30),c(0.10,0.14,0.14),
                                   c(1, 30),c(0.19, 0.38),
                                   N=3,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                  simulation.cohort.size = 1e+08)
+                                  simulation.cohort.size = cohort.size)
 
 
 ```
@@ -141,25 +142,26 @@ ans.Adalat.high <- makeResultList(c(2,8,30),c(0.10,0.14,0.14),
 
 ## Carapetis
 
-```{r}
+```{r,fig.dim=c(7,6)}
 
 ## Standard assumptions
 ans.Carapetis.standard <- makeResultList(c(2,8,30),c(0.09,0.19,0.19),
                                          c(0.5,30),c(0.18,0.35),
                                          N=7,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                         simulation.cohort.size = 1e+08)
+                                         plotfit=TRUE,
+                                         simulation.cohort.size = cohort.size)
 
 ## Low ITB assumptions
 ans.Carapetis.low <- makeResultList(c(2,8,30),c(0.06,0.19,0.19),
                                     c(0.25,30),c(0.18,0.35),
                                     N=7,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                    simulation.cohort.size = 1e+08)
+                                    simulation.cohort.size = cohort.size)
 
 ## High ITB assumptions
 ans.Carapetis.high <- makeResultList(c(2,8,30),c(0.13,0.19,0.19),
                                      c(1,30),c(0.18,0.35),
                                      N=7,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                     simulation.cohort.size = 1e+08)
+                                     simulation.cohort.size = cohort.size)
 
 
 ```
@@ -168,25 +170,26 @@ ans.Carapetis.high <- makeResultList(c(2,8,30),c(0.13,0.19,0.19),
 
 ## Linner
 
-```{r}
+```{r,fig.dim=c(7,6)}
 
 ## Standard assumptions
 ans.Linner.standard <- makeResultList(c(2,8,30),c(0.13,0.27,0.27),
                                       c(0.5,30),c(0.2,0.4),
                                       N=14,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                      simulation.cohort.size = 1e+08)
+                                      plotfit=TRUE,
+                                      simulation.cohort.size = cohort.size)
 
 ## Low ITB assumptions
 ans.Linner.low <- makeResultList(c(2,8,30),c(0.09,0.27,0.27),
                                  c(0.25,30),c(0.2,0.4),
                                  N=14,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                 simulation.cohort.size = 1e+08)
+                                 simulation.cohort.size = cohort.size)
 
 ## High ITB assumptions
 ans.Linner.high <- makeResultList(c(2,8,30),c(0.18,0.27,0.27),
                                   c(1,30),c(0.2,0.4),
                                   N=14,Tmax=Tmax,Tlandmark=Tlandmark,Tearly=Tearly,
-                                  simulation.cohort.size = 1e+08)
+                                  simulation.cohort.size = cohort.size)
 
 ```
 
