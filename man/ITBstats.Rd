@@ -37,7 +37,7 @@ ITBstats(
 Depends on [returnraw].
 
 Note that if returnraw==FALSE, the following labels are used for analysis variants:
-a) person time from 0 (standard); b) person time from exposure; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
+a) person time from 0 (standard); b) excluding early events & don't reset clock; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
 }
 \description{
 Function to simulate a cohort

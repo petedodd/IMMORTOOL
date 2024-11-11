@@ -15,7 +15,7 @@
 ##' @return Depends on [returnraw].
 ##'
 ##' Note that if returnraw==FALSE, the following labels are used for analysis variants:
-##' a) person time from 0 (standard); b) person time from exposure; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
+##' a) person time from 0 (standard); b) excluding early events & don't reset clock; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
 ##'
 ##' @author Pete Dodd
 ##' @export
@@ -35,7 +35,8 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   TZ <- data.table::data.table(t.e=rtt.exposure(N),
                    t.d=rtt.death(N),
                    t.l=rtt.ltfu(N))
-  ## NOTE these exposed/dead categories are used in analyses a & b & d, reset in landmark (c)
+  ## NOTE these exposed/dead categories are used in analyses a & b & d
+  ## c = landmark is only analysis that does not use final exposure status as definitive
   TZ[,exposed:=ifelse(t.e<pmin(t.d,t.l,Tstop),TRUE,FALSE)]
   TZ[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
 
@@ -54,17 +55,19 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   ## Suissa stats
   suissa.p <- TZ[exposed==TRUE,sum(t.e)/sum(PTa)] #Suissa p fraction of T1 that us U
 
-  ## b) person time from exposure
-  TZ[,PTb:=ifelse(exposed==TRUE,PTa-t.e,PTa)]
-  NPT2 <- TZ[,.(deaths=sum(died),PT=sum(PTb)),by=exposed]
-  NPT2[,rate:=deaths/PT]
-  RR3 <- NPT2[exposed==TRUE]$rate / NPT2[exposed==FALSE]$rate
-  frac.d.control.b <- TZ[died == TRUE, mean(!exposed)] # frac deaths in control
+  ## b) excluding early events & don't reset clock
+  TZE <- TZ[!(t.d < Texc | t.l < Texc)]
+  cat("Exclude early events dropping ", nrow(TZ) - nrow(TZE), " patients from ", nrow(TZ), "\n")
+  TZE[, PTb := pmin(t.d, t.l, Tstop)] # NOTE resetting clock
+  NPTEb <- TZE[, .(deaths = sum(died), PT = sum(PTb)), by = exposed]
+  NPTEb[, rate := deaths / PT]
+  RREb <- NPTEb[exposed == TRUE]$rate / NPTEb[exposed == FALSE]$rate
+  frac.d.control.b <- TZE[died == TRUE, mean(!exposed)] # frac deaths in control
 
   ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
   TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
   cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
-  TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark
+  TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark i.e. exposure status at Tlandmark definitive
   TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
   TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]
   NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
@@ -73,20 +76,19 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   frac.d.control.c <- TZL[died == TRUE, mean(!exposed)] # frac deaths in control
 
   ## d) excluding early events & reset clock
-  TZE <- TZ[!(t.d < Texc | t.l < Texc)]
-  cat('Exclude early events dropping ', nrow(TZ)-nrow(TZE),' patients from ',nrow(TZ),'\n')
-  TZE[,PT:=pmin(t.d,t.l,Tstop)-Texc]            #NOTE resetting clock
-  NPTE <- TZE[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
-  NPTE[,rate:=deaths/PT]
-  RRE <- NPTE[exposed==TRUE]$rate / NPTE[exposed==FALSE]$rate
-  frac.d.control.d <- TZE[died == TRUE, mean(!exposed)] # frac deaths in control
+  ## NOTE see b) for creating TZE
+  TZE[,PTd:=pmin(t.d,t.l,Tstop)-Texc]            #NOTE resetting clock
+  NPTEd <- TZE[,.(deaths=sum(died),PT=sum(PTd)),by=exposed]
+  NPTEd[,rate:=deaths/PT]
+  RREd <- NPTEd[exposed==TRUE]$rate / NPTEd[exposed==FALSE]$rate
+  frac.d.control.d <- TZE[died == TRUE, mean(!exposed)] # frac deaths in control (same as b)
 
   ## return
   if(!returnraw){
     list(table.a=NPT,RR.a=RR2,frac.d.control.a=frac.d.control.a,  #person time from 0
-         table.b=NPT2,RR.b=RR3,frac.d.control.b=frac.d.control.b, #person time from exposure
+         table.b=NPTEb,RR.b=RREb,frac.d.control.b=frac.d.control.b, #excluding early events & don't reset clock
          table.c=NPTL,RR.c=RRL,frac.d.control.c=frac.d.control.c, #landmark
-         table.d=NPTE,RR.d=RRE,frac.d.control.d=frac.d.control.d, #exclude early events
+         table.d=NPTEd,RR.d=RREd,frac.d.control.d=frac.d.control.d, #excluding early events & reset clock
          F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
          suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
          suissa.p=suissa.p
