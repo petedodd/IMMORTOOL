@@ -16,21 +16,25 @@ knitr::opts_chunk$set(
 
 # General background
 
+The README of the GitHub repo at https://github.com/petedodd/IMMORTOOL describes how to run the Shiny app version of this package, as well as how to access a live snapshot of this app online without installation.
+
+This vignette will describe how to use the IMMORTOOL package from the commandline or from scripts in R.
+
+
+First install the library (see README), and then load at the start of a script or R session:
+
 ```{r setup}
 library(IMMORTOOL)
 ```
 
 
-
+For the example below we will set a random number seed, and take the cohort size to be 0.5 million. Restults should be checked to verify random noise is not affecting them at the desired level of accuracy.
 ```{r}
 cohort.size <- 5e6 #stable to 2 dp
 set.seed(1234)
 ```
 
-
-TODO use of shiny app
-TODO define below classes of paper
-
+The examples below are taken from the article describing this tool. The first set of articles are studies where both naive and more sophisticated analyses have been undertaken. The second set of articles (with various sensitivity analyses around data interpretation) have only naive analyses, and underly the forst plot in our main article.
 
 
 # First set of examples
@@ -245,4 +249,42 @@ knitr::kable(tab[,c('id','CI.a')])
 
 # Examples using internals of above
 
-TODO
+The above `makeResultList` function is a wrapper to simplify workflows, and for use in the Shiny app. It may be useful and instructuve to understand the steps that this function is carrying out.
+
+Suppose we consider the data from Andalat et al.:
+```{r}
+mortality.times <- c(2,8,30)
+mortality.fracs <- c(0.07,0.14,0.14)
+treatment.times <- c(0.5,30)
+treatment.fracs <- c(0.19,0.38)
+```
+
+We can use these data to generate a fit to mortality parameters, and then fit the treatment/exposure hazard given the mortality parameters, before combining the 4 Weibull parameters into a single list for convenience:
+```{r}
+## mortality fit
+mortality.parms <- Yfit(mortality.times, mortality.fracs)
+
+## treatment data and fit
+treatment.data <- cbind(treatment.times, treatment.fracs)
+treatment.parms <- getTxParz(treatment.data, mortality.parms)
+
+## combine
+W <- list(k.d=mortality.parms[1], L.d=mortality.parms[2],
+              k.e=treatment.parms$k.e, L.e=treatment.parms$L.e)
+
+```
+
+These parameters can then be fed to the main function than creates and runs cohorts, before returning a list of results:
+```{r}
+
+outputs <- ITBstats(
+    N = cohort.size,
+    Tstop = Tmax, Tlandmark = 2, Texc = 1,
+    rtt.exposure = function(n) rweibull(n, W$k.e, W$L.e),
+    rtt.death = function(n) rweibull(n, W$k.d, W$L.d),
+    rtt.ltfu = function(n) rweibull(n, 1, 36500)
+  )
+
+```
+
+Note: the function `ITBstats` can take any random number generator distributions as inputs, so does not need to restrict to Weibull distributions.
