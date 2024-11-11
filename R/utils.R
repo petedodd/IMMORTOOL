@@ -270,7 +270,8 @@ dns <- function(x,ke,le,km,lm) dweibull(x,shape=ke,scale=le) * exp(-(x/lm)^km)
 ## normalization for the above: ie cumulative density
 norm <- function(T,ke,le,km,lm){
   if(ke<1 & T < le/200){ #safety: avoid numerical integration over blow-up
-    1-exp(-(T/le)^ke) #non-competing version which is close
+    1-exp(-(T/le)^ke)- #non-competing version which is close
+      (le / lm)^km * gamma(1 + km / ke) * pgamma((T / le)^ke, 1 + km / ke)
   } else{
     integrate(function(x) dns(x,ke,le,km,lm),lower=0,upper=T)$value
   }
