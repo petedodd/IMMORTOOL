@@ -18,6 +18,7 @@ app_server <- function(input, output, session) {
   ITBoutput <- eventReactive(input$runsim, {
     ans <- ITBstats(
       N = 1e4, Tstop = input$T.max,
+      Tlandmark = input$T.landmark, Tearly = input$T.landmark,
       rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
       rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
       rtt.ltfu = function(n) rweibull(n, 1, 36500)
@@ -111,8 +112,8 @@ app_server <- function(input, output, session) {
       ## output
       txt <- paste0(
         "Suggested parameters based on this are:\n Mortality (shape,scale)=(",
-        D["k"], " , ", D["L"], " )\n Treatment (shape,scale)=(",
-        T$k.e, " , ", T$L.e, " )\n"
+        round(D["k"],1), " , ", round(D["L"],1), " )\n Treatment (shape,scale)=(",
+        round(T$k.e,1), " , ", round(T$L.e,1), " )\n"
       )
     }
     list(
@@ -128,6 +129,15 @@ app_server <- function(input, output, session) {
   output$fits <- renderText({
     FV <- fitVals()
     FV$txt
+  })
+
+  ## text to report input parms
+  output$inputtext <- renderText({
+    paste0("Input parameters:  T.max = ", input$T.max,"   ",
+           "T.landmark = ",input$T.landmark,"   ",
+           "exposure (k,L) = (",round(input$k.e,1),", ",round(input$L.e,1),")   ",
+           "death (k,L) = (",round(input$k.e,1),", ",round(input$L.e,1),")"
+           )
   })
 
 
@@ -172,8 +182,8 @@ app_server <- function(input, output, session) {
     anso <- makeCItable(anslist)
     anso <- anso[, c("id", "CI.a", "CI.b", "CI.c", "CI.d")]
     names(anso) <- c(
-      "N", "a) person time from 0", "b) person time from exposure",
-      "c) landmark", "d) excluding early events & reset clock"
+      "N", "a) person time from 0", "b) excluding early events & don't reset clock",
+       "c) excluding early events & reset clock","d) landmark"
     )
     anso
   })

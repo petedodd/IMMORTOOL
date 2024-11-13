@@ -30,11 +30,13 @@ app_ui <- function(request) {
                         tags$img(src = 'www/analysisA.png',width = '1000px'),
                         p("The most basic approach is simply to consider all time in those ultimately exposed as exposed. This misclassifies some unexposed time as exposed. In IMMORTOOL output the rate ratio for this analysis is labelled 'a'."),
                         h2("Analysis B"),
-                        tags$img(src = 'www/analysisB.png',width = '1000px'),
-                        p("Another approach occasionally used ignores the unexposed time in those ultimately exposed. In IMMORTOOL output the rate ratio for this analysis is labelled 'b'."),
+                        p("Another approach excludes those with early deaths before a specified time. In IMMORTOOL output the rate ratio for this analysis is labelled 'b'."),
                         h2("Analysis C"),
-                        tags$img(src = 'www/analysisC.png',width = '1000px'),
-                        p("Landmark analysis attempts to mitigate the effects of immortal time bias in two ways: 1) Those dying before landmark time are excluded; 2) Those exposed after landmark are considered unexposed. In IMMORTOOL output the rate ratio for this analysis is labelled 'c'."),
+                        p("As above, this approach excludes those with early deaths before a specified time, but also resets the clock to measure person time from this specified time. In IMMORTOOL output the rate ratio for this analysis is labelled 'c'."),
+                        h2("Analysis D"),
+                        ## tags$img(src = 'www/analysisD.png',width = '1000px'),
+                        p("Landmark analysis attempts to mitigate the effects of immortal time bias in two ways: 1) Those dying before landmark time are excluded; 2) Those exposed after landmark are considered unexposed. For Landmark analysis exposure status at the landmark time is definitive; whereas in analysis c, exposure status and the end time is definitive. In IMMORTOOL output the rate ratio for this analysis is labelled 'd'."),
+                        p("NOTE: the Landmark time input is used for analyses b-d"),
                         p(" ")
                         ## code omitted
                       ),
@@ -121,7 +123,7 @@ app_ui <- function(request) {
                                            value = 3)
 
                                ),
-                      tabPanel("Simulation results", tableOutput("tableA1"))
+                      tabPanel("Simulation results", textOutput("inputtext"), tableOutput("tableA1"))
 
                       )
         )
