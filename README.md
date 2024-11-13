@@ -21,9 +21,37 @@ Depending on your system, this may open the app in a system web browser. You may
 
 Apart from the shiny app, a number of utility functions are provided that can be used without the GUI: see below and additional documentation.
 
-## Examples
+## Use online ##
 
-TODO update; refer to vignette & shiny live
+If you want to use without installing, you can access a shiny-live version of this app at:
+
+https://petedodd.github.io/IMMORTOOL-live/
+
+Please note: this will take some moments to load.
+
+
+## Examples of command line use ##
+
+It may be preferable to use the functions provided in this package directly from R, rather than running the shiny app. This is more flexible and reproducible. To access examples of use, please build the vignette on installation, e.g.
+
+```R
+devtools::install_github('petedodd/IMMORTOOL',build_vignettes=TRUE)
+```
+after which the vignette can be accessed in the usual way from R:
+
+```R
+vignette('IMMORTOOL-use-from-R')
+```
+
+Alternatively, you can access the vignette Rmd file in the vignettes folder of this repository, and create the vignette from R using:
+
+```R
+ rmarkdown::render('IMMORTOOL-use-from-R.Rmd')
+```
+which will take around a minute.
+
+
+
 
 
 
