@@ -8,7 +8,7 @@ ITBstats(
   N = 10000,
   Tstop = 90,
   Tlandmark = 1,
-  Texc = 0,
+  Tearly = 0,
   rtt.exposure,
   rtt.death,
   rtt.ltfu,
@@ -23,7 +23,7 @@ ITBstats(
 
 \item{Tlandmark}{The time used for a landmark analysis}
 
-\item{Texc}{The time used for exclude early events & time analysis}
+\item{Tearly}{The time used for exclude early events & time analysis}
 
 \item{rtt.exposure}{random time-to-exposure generator}
 
@@ -37,7 +37,7 @@ ITBstats(
 Depends on [returnraw].
 
 Note that if returnraw==FALSE, the following labels are used for analysis variants:
-a) person time from 0 (standard); b) excluding early events & don't reset clock; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
+a) person time from 0 (standard); b) excluding early events & don't reset clock; c) excluding early events & reset clock; d) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
 }
 \description{
 Function to simulate a cohort

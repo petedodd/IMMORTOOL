@@ -7,7 +7,7 @@
 ##' @param N The size of the cohort for simulation (unrelated to the experimental study cohort size)
 ##' @param Tstop The time at which observation stops
 ##' @param Tlandmark The time used for a landmark analysis
-##' @param Texc The time used for exclude early events & time analysis
+##' @param Tearly The time used for exclude early events & time analysis
 ##' @param rtt.exposure random time-to-exposure generator
 ##' @param rtt.death random time-to-death generator
 ##' @param rtt.ltfu random time-to-ltfu generator
@@ -15,7 +15,7 @@
 ##' @return Depends on [returnraw].
 ##'
 ##' Note that if returnraw==FALSE, the following labels are used for analysis variants:
-##' a) person time from 0 (standard); b) excluding early events & don't reset clock; c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control; d) excluding early events & reset clock
+##' a) person time from 0 (standard); b) excluding early events & don't reset clock; c) excluding early events & reset clock; d) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
 ##'
 ##' @author Pete Dodd
 ##' @export
@@ -24,7 +24,7 @@
 ITBstats <- function(N=1e4,           #simulation cohort size
                      Tstop=90,        #end time
                      Tlandmark=1,     #time used in landmark analysis
-                     Texc=0,     #time for exclude early deaths analysis
+                     Tearly=0,        #time for exclude early deaths analysis
                      rtt.exposure,    #random time-to-exposure
                      rtt.death,       #random time-to-death
                      rtt.ltfu,        #random time-to-ltfu
@@ -56,7 +56,7 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   suissa.p <- TZ[exposed==TRUE,sum(t.e)/sum(PTa)] #Suissa p fraction of T1 that us U
 
   ## b) excluding early events & don't reset clock
-  TZE <- TZ[!(t.d < Texc | t.l < Texc)]
+  TZE <- TZ[!(t.d < Tearly | t.l < Tearly)]
   cat("Exclude early events dropping ", nrow(TZ) - nrow(TZE), " patients from ", nrow(TZ), "\n")
   TZE[, PTb := pmin(t.d, t.l, Tstop)] # NOTE resetting clock
   NPTEb <- TZE[, .(deaths = sum(died), PT = sum(PTb)), by = exposed]
@@ -64,37 +64,41 @@ ITBstats <- function(N=1e4,           #simulation cohort size
   RREb <- NPTEb[exposed == TRUE]$rate / NPTEb[exposed == FALSE]$rate
   frac.d.control.b <- TZE[died == TRUE, mean(!exposed)] # frac deaths in control
 
-  ## c) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
-  TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
-  cat('Landmark dropping ', nrow(TZ)-nrow(TZL),' patients from ',nrow(TZ),'\n')
-  TZL[,exposed:=ifelse(t.e<pmin(Tlandmark,t.d,t.l,Tstop),TRUE,FALSE)] #should be only t.e<Tlandmark i.e. exposure status at Tlandmark definitive
-  TZL[,died:=ifelse(t.d<pmin(t.l,Tstop),TRUE,FALSE)]
-  TZL[,PT:=pmin(t.d,t.l,Tstop)-Tlandmark]
-  NPTL <- TZL[,.(deaths=sum(died),PT=sum(PT)),by=exposed]
-  NPTL[,rate:=deaths/PT]
-  RRL <- NPTL[exposed==TRUE]$rate / NPTL[exposed==FALSE]$rate
-  frac.d.control.c <- TZL[died == TRUE, mean(!exposed)] # frac deaths in control
-
-  ## d) excluding early events & reset clock
+  ## c) excluding early events & reset clock
   ## NOTE see b) for creating TZE
-  TZE[,PTd:=pmin(t.d,t.l,Tstop)-Texc]            #NOTE resetting clock
+  TZE[,PTd:=pmin(t.d,t.l,Tstop)-Tearly]            #NOTE resetting clock
   NPTEd <- TZE[,.(deaths=sum(died),PT=sum(PTd)),by=exposed]
   NPTEd[,rate:=deaths/PT]
   RREd <- NPTEd[exposed==TRUE]$rate / NPTEd[exposed==FALSE]$rate
   frac.d.control.d <- TZE[died == TRUE, mean(!exposed)] # frac deaths in control (same as b)
 
+  ## d) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
+  TZL <- TZ[!(t.d < Tlandmark | t.l < Tlandmark)]
+  cat("Landmark dropping ", nrow(TZ) - nrow(TZL), " patients from ", nrow(TZ), "\n")
+  TZL[, exposed := ifelse(t.e < pmin(Tlandmark, t.d, t.l, Tstop), TRUE, FALSE)] # should be only t.e<Tlandmark i.e. exposure status at Tlandmark definitive
+  TZL[, died := ifelse(t.d < pmin(t.l, Tstop), TRUE, FALSE)]
+  TZL[, PT := pmin(t.d, t.l, Tstop) - Tlandmark]
+  NPTL <- TZL[, .(deaths = sum(died), PT = sum(PT)), by = exposed]
+  NPTL[, rate := deaths / PT]
+  RRL <- NPTL[exposed == TRUE]$rate / NPTL[exposed == FALSE]$rate
+  frac.d.control.c <- TZL[died == TRUE, mean(!exposed)] # frac deaths in control
+
   ## return
   if(!returnraw){
-    list(table.a=NPT,RR.a=RR2,frac.d.control.a=frac.d.control.a,  #person time from 0
-         table.b=NPTEb,RR.b=RREb,frac.d.control.b=frac.d.control.b, #excluding early events & don't reset clock
-         table.c=NPTL,RR.c=RRL,frac.d.control.c=frac.d.control.c, #landmark
-         table.d=NPTEd,RR.d=RREd,frac.d.control.d=frac.d.control.d, #excluding early events & reset clock
-         F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
-         suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
-         suissa.p=suissa.p
-         ## TODO document this: not sure relevant to onward calx
-         ## https://sphweb.bumc.bu.edu/otlt/mph-modules/ep/ep713_randomerror/ep713_randomerror4.html
-         )
+    list(
+      ## person time from 0
+      table.a=NPT,RR.a=RR2,frac.d.control.a=frac.d.control.a,
+      ## excluding early events & don't reset clock
+      table.b=NPTEb,RR.b=RREb,frac.d.control.b=frac.d.control.b,
+      ## NOTE a swap in labels below
+      ## excluding early events & reset clock
+      table.c=NPTEd,RR.c=RREd,frac.d.control.c=frac.d.control.d,
+      ## landmark
+      table.d=NPTL,RR.d=RRL,frac.d.control.d=frac.d.control.c,
+      F.e=TZ[,mean(exposed)],F.d=TZ[,mean(died)], #NOTE ltfu=1-death
+      suissa.k=NPT[exposed==TRUE]$PT / NPT[exposed==TRUE]$PT,
+      suissa.p=suissa.p
+    )
   } else {
     return(list(cohort=TZ,landmark.cohort=TZL,excearlyevent.cohort=TZE))
   }
@@ -379,7 +383,7 @@ makeResultList <- function(mortality.times, mortality.fracs,
   # run cohort
   ans <- ITBstats(
     N = simulation.cohort.size,
-    Tstop = Tmax, Tlandmark = Tlandmark, Texc = Tearly,
+    Tstop = Tmax, Tlandmark = Tlandmark, Tearly = Tearly,
     rtt.exposure = function(n) rweibull(n, input$k.e, input$L.e),
     rtt.death = function(n) rweibull(n, input$k.d, input$L.d),
     rtt.ltfu = function(n) rweibull(n, 1, 36500),...

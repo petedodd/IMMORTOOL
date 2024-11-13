@@ -279,7 +279,7 @@ These parameters can then be fed to the main function than creates and runs coho
 
 outputs <- ITBstats(
     N = cohort.size,
-    Tstop = Tmax, Tlandmark = 2, Texc = 1,
+    Tstop = Tmax, Tlandmark = 2, Tearly = 1,
     rtt.exposure = function(n) rweibull(n, W$k.e, W$L.e),
     rtt.death = function(n) rweibull(n, W$k.d, W$L.d),
     rtt.ltfu = function(n) rweibull(n, 1, 36500)
