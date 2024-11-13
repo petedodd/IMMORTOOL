@@ -22,6 +22,21 @@ For fitting to treatment data.
 \details{
 This takes data on cumulative percentiles of cumulative treatment among those treated, and fits a Weibull distribution to it so as to minimize the sum-of-squares error, taking into account the competing hazard of death.
 }
+\examples{
+## some data:
+mortality.times <- c(2,8,30)
+mortality.fracs <- c(0.07, 0.14, 0.14)
+treatment.times <- c(0.5, 30)
+treatment.fracs <- c(0.19, 0.38)
+
+## first fit mortality using Yfit:
+mortality.parms <- Yfit(mortality.times, mortality.fracs)
+
+## then fit treatment:
+treatment.data <- cbind(treatment.times, treatment.fracs)
+treatment.parms <- getTxParz(treatment.data, mortality.parms)
+
+}
 \author{
 Pete Dodd
 }

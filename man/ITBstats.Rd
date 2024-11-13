@@ -45,6 +45,18 @@ Function to simulate a cohort
 \details{
 This function will simulate a cohort with relevant times-to-event under a null assumption for the treatment effect. Typical use returns summary statistics.
 }
+\examples{
+set.seed(1234) #set random number seed
+outputs <- ITBstats(
+                    N = 5e3,
+                    Tstop = 90, Tlandmark = 2, Tearly = 1,
+                    rtt.exposure = function(n) rweibull(n, 2, 2),
+                    rtt.death = function(n) rweibull(n, 2, 3),
+                    rtt.ltfu = function(n) rweibull(n, 1, 36500)
+                   )
+outputs
+
+}
 \author{
 Pete Dodd
 }

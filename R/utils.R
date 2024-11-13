@@ -16,6 +16,16 @@
 ##'
 ##' Note that if returnraw==FALSE, the following labels are used for analysis variants:
 ##' a) person time from 0 (standard); b) excluding early events & don't reset clock; c) excluding early events & reset clock; d) landmark analysis: drop those dead/ltfu before landmark AND exposed after landmark -> control
+##' @examples
+##' set.seed(1234) #set random number seed
+##' outputs <- ITBstats(
+##'                     N = 5e3,
+##'                     Tstop = 90, Tlandmark = 2, Tearly = 1,
+##'                     rtt.exposure = function(n) rweibull(n, 2, 2),
+##'                     rtt.death = function(n) rweibull(n, 2, 3),
+##'                     rtt.ltfu = function(n) rweibull(n, 1, 36500)
+##'                    )
+##' outputs
 ##'
 ##' @author Pete Dodd
 ##' @export
@@ -231,11 +241,16 @@ makeFitCheckPlot <- function(input,FT,FV){
 ##' Fit Weibull to times and fractions
 ##'
 ##' This uses an OLS fit to transformed Weibull parameters to fit. See Weibull distribution Wikipedia page for explanation.
-##' 
+##'
 ##' @title Fit Weilbull
 ##' @param t vector of time points
 ##' @param F vector of fractions with event
 ##' @return vector (k,L) of Weibull shape/scale parameters
+##' @examples
+##' mortality.times <- c(2,8,30)
+##' mortality.fracs <- c(0.07, 0.14, 0.14)
+##' mortality.parms <- Yfit(mortality.times, mortality.fracs)
+##'
 ##' @author Pete Dodd
 ##' @export
 Yfit <- function(t, F) {
@@ -256,6 +271,20 @@ Yfit <- function(t, F) {
 ##' @param mort.parms The best-fit Weibull shape and scale parameter for mortality as vector
 ##' @param denominator Whether fractions have the whole cohort as denominator (default: 'cohort') or only those ultimately 'exposed'
 ##' @return A list with a logical flag to indicate convergence, and the best-fit Weibull shape and scale parameters.
+##' @examples
+##' ## some data:
+##' mortality.times <- c(2,8,30)
+##' mortality.fracs <- c(0.07, 0.14, 0.14)
+##' treatment.times <- c(0.5, 30)
+##' treatment.fracs <- c(0.19, 0.38)
+##'
+##' ## first fit mortality using Yfit:
+##' mortality.parms <- Yfit(mortality.times, mortality.fracs)
+##'
+##' ## then fit treatment:
+##' treatment.data <- cbind(treatment.times, treatment.fracs)
+##' treatment.parms <- getTxParz(treatment.data, mortality.parms)
+##'
 ##' @author Pete Dodd
 ##' @export
 getTxParz <- function(M,mort.parms,denominator='cohort'){
@@ -333,6 +362,20 @@ CIfactor <- function(N, frac.deaths.control) {
 ##' @param ... any extras
 ##' @param frac.deaths.control the fraction of deaths that are expected in the control arm (returned by ITBstats)
 ##' @return A list of results from ITBstats together with the number of deaths
+##' @examples
+##' set.seed(1234) #set random number seed
+##'
+##' ans.vanderVaart <- makeResultList(
+##'                     mortality.times = c(7, 30, 90),
+##'                     mortality.fracs = c(0.05, 0.21, 0.31),
+##'                     treatment.times = c(6, 9, 13, 90),
+##'                     treatment.fracs = c(0.09, 0.19, 0.28, 0.37),
+##'                     N = 147, Tmax = 90, Tlandmark = 1,
+##'                     plotfit = TRUE,
+##'                     simulation.cohort.size = 5e3 #NOTE this is too small for convenient
+##'                    )
+##' ans.vanderVaart
+##'
 ##' @author Pete Dodd
 ##' @export
 makeResultList <- function(mortality.times, mortality.fracs,
@@ -401,6 +444,28 @@ makeResultList <- function(mortality.times, mortality.fracs,
 ##' @title Make a table of results
 ##' @param list.of.results a named list of results from makeResultList, ie from ITBstats with N=#deaths appended
 ##' @return a data frame of results for all elements in the list
+##' @examples
+##' set.seed(1234) #set random number seed
+##'
+##' ## create some results
+##' ans.vanderVaart <- makeResultList(
+##'                     mortality.times = c(7, 30, 90),
+##'                     mortality.fracs = c(0.05, 0.21, 0.31),
+##'                     treatment.times = c(6, 9, 13, 90),
+##'                     treatment.fracs = c(0.09, 0.19, 0.28, 0.37),
+##'                     N = 147, Tmax = 90, Tlandmark = 1,
+##'                     plotfit = TRUE,
+##'                     simulation.cohort.size = 5e3 #NOTE this is too small for convenient
+##'                    )
+##'
+##' ## fake list duplicating above:
+##' L <- list(ans.vanderVaart, ans.vanderVaart, ans.vanderVaart)
+##' names(L) <- c('Study 1', 'Study 2', 'Study 3')
+##'
+##' ## create table from results list
+##' tab <- makeCItable(L)
+##' tab
+##'
 ##' @author Pete Dodd
 ##' @export
 makeCItable <- function(list.of.results){

@@ -20,6 +20,12 @@ Fit Weibull to times and fractions
 \details{
 This uses an OLS fit to transformed Weibull parameters to fit. See Weibull distribution Wikipedia page for explanation.
 }
+\examples{
+mortality.times <- c(2,8,30)
+mortality.fracs <- c(0.07, 0.14, 0.14)
+mortality.parms <- Yfit(mortality.times, mortality.fracs)
+
+}
 \author{
 Pete Dodd
 }

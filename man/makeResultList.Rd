@@ -55,6 +55,21 @@ A shortcut function to generate all results
 \details{
 This is a shortcut function to fit to mortality and treatment data and return results. This uses a cohort of 10,000 by default.
 }
+\examples{
+set.seed(1234) #set random number seed
+
+ans.vanderVaart <- makeResultList(
+                    mortality.times = c(7, 30, 90),
+                    mortality.fracs = c(0.05, 0.21, 0.31),
+                    treatment.times = c(6, 9, 13, 90),
+                    treatment.fracs = c(0.09, 0.19, 0.28, 0.37),
+                    N = 147, Tmax = 90, Tlandmark = 1,
+                    plotfit = TRUE,
+                    simulation.cohort.size = 5e3 #NOTE this is too small for convenient
+                   )
+ans.vanderVaart
+
+}
 \author{
 Pete Dodd
 }
