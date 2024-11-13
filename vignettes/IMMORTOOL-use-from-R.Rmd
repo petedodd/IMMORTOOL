@@ -28,13 +28,13 @@ library(IMMORTOOL)
 ```
 
 
-For the example below we will set a random number seed, and take the cohort size to be 0.5 million. Restults should be checked to verify random noise is not affecting them at the desired level of accuracy.
+For the example below we will set a random number seed, and take the cohort size to be 0.5 million. Results should be checked to verify random noise is not affecting them at the desired level of accuracy.
 ```{r}
 cohort.size <- 5e6 #stable to 2 dp
 set.seed(1234)
 ```
 
-The examples below are taken from the article describing this tool. The first set of articles are studies where both naive and more sophisticated analyses have been undertaken. The second set of articles (with various sensitivity analyses around data interpretation) have only naive analyses, and underly the forst plot in our main article.
+The examples below are taken from the article describing this tool. The first set of articles are studies where both naive and more sophisticated analyses have been undertaken. The second set of articles (with various sensitivity analyses around data interpretation) have only naive analyses, and underly the forest plot in our main article.
 
 
 # First set of examples
@@ -49,7 +49,7 @@ ans.vanderVaart <- makeResultList(
                       mortality.fracs = c(0.05,0.21,0.31),
                       treatment.times = c(6,9,13,90),
                       treatment.fracs = c(0.09,0.19,0.28,0.37),
-                      N = 147, Tmax = 90, Tlandmark = 1,
+                      N = 147, Tmax = 90, Tlandmark = 1, Tearly = 2,
                       plotfit = TRUE,
                       simulation.cohort.size = cohort.size)
 
@@ -93,7 +93,7 @@ ans.Geleris <- makeResultList(mortality.times = tzm,
                               mortality.fracs = fzm,
                               treatment.times = tzt,
                               treatment.fracs = fzt,
-                              N=346,Tmax=30,Tlandmark=2,
+                              N=346,Tmax=30,Tlandmark=1,
                               plotfit = TRUE,
                               simulation.cohort.size = cohort.size)
 ```
