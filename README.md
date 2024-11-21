@@ -27,7 +27,7 @@ If you want to use without installing, you can access a shiny-live version of th
 
 https://petedodd.github.io/IMMORTOOL-live/
 
-Please note: this will take some moments to load.
+Please note: this will take some moments to load. It may be necessary to access this site using Firefox or chrome browsers.
 
 
 ## Examples of command line use ##
