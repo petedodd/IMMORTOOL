@@ -115,7 +115,6 @@ knitr::kable(tab[,c('id','CI.a','CI.b','CI.c','CI.d')])
 
 ```
 
-NOTE could modify above to grey out the irrelevant cells?
 
 
 # Second set of examples
